@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { transactionsAPI, masterDataAPI } from '../../services/api';
+import { transactionsAPI } from '../../services/api';
 import { toast } from 'react-hot-toast';
 import LineItemsTable from '../../components/LineItemsTable';
+import AsyncContactSelect from '../../components/AsyncContactSelect';
 
 const PurchaseOrder = () => {
   const queryClient = useQueryClient();
@@ -20,39 +21,7 @@ const PurchaseOrder = () => {
   const today = new Date().toISOString().split('T')[0];
   const [form, setForm] = useState({ vendor_id: '', po_date: today, delivery_date: '' });
   const [items, setItems] = useState([{ product_id: '', quantity: 1, unit_price: 0, tax_percent: 0 }]);
-  const [vendorDetails, setVendorDetails] = useState({ email: '', mobile: '', address: '', gst_number: '' });
-  const [fetchingVendor, setFetchingVendor] = useState(false);
-
-  // Fetch vendor details when vendor_id changes
-  useEffect(() => {
-    const fetchVendorDetails = async () => {
-      if (form.vendor_id && form.vendor_id.trim()) {
-        setFetchingVendor(true);
-        try {
-          const response = await masterDataAPI.getContact(form.vendor_id);
-          const vendor = response.data;
-          setVendorDetails({
-            email: vendor.email || '',
-            mobile: vendor.mobile || '',
-            address: vendor.address || '',
-            gst_number: vendor.gst_number || ''
-          });
-        } catch (error) {
-          console.error('Error fetching vendor details:', error);
-          setVendorDetails({ email: '', mobile: '', address: '', gst_number: '' });
-          if (error.response?.status === 404) {
-            toast.error('Vendor not found');
-          }
-        } finally {
-          setFetchingVendor(false);
-        }
-      } else {
-        setVendorDetails({ email: '', mobile: '', address: '', gst_number: '' });
-      }
-    };
-
-    fetchVendorDetails();
-  }, [form.vendor_id]);
+  const [vendorDetails, setVendorDetails] = useState({ name: '', email: '', mobile: '', address: '', gst_number: '' });
 
   const createMutation = useMutation(() => {
     // Client-side validation
@@ -76,7 +45,7 @@ const PurchaseOrder = () => {
       setShowForm(false); 
       setItems([{ product_id:'', quantity:1, unit_price:0, tax_percent:0 }]); 
       setForm({ vendor_id:'', po_date:today, delivery_date:'' });
-      setVendorDetails({ email: '', mobile: '', address: '', gst_number: '' }); 
+      setVendorDetails({ name: '', email: '', mobile: '', address: '', gst_number: '' }); 
       queryClient.invalidateQueries('purchase-orders'); 
     },
     onError: (error) => {
@@ -100,12 +69,14 @@ const PurchaseOrder = () => {
           <h3 className="text-lg font-semibold mb-4">New Purchase Order</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Vendor ID *</label>
-              <input 
-                className="input" 
-                placeholder="Enter Vendor ID (e.g., 2)" 
-                value={form.vendor_id} 
-                onChange={(e)=>setForm({...form, vendor_id:e.target.value})} 
+              <label className="block text-sm font-medium text-gray-700 mb-1">Select Vendor *</label>
+              <AsyncContactSelect
+                value={form.vendor_id}
+                onChange={(vendorId) => setForm({...form, vendor_id: vendorId})}
+                onContactDetails={setVendorDetails}
+                contactType="vendor"
+                placeholder="Search vendors by name or ID..."
+                required={true}
               />
             </div>
             <div>
@@ -130,50 +101,54 @@ const PurchaseOrder = () => {
             </div>
             
             {/* Vendor Contact Details Section */}
-            <div className="md:col-span-3 border-t pt-4 mt-2">
-              <h4 className="text-sm font-medium text-gray-800 mb-3 flex items-center">
-                Vendor Contact Details 
-                {fetchingVendor && <span className="ml-2 text-xs text-blue-600">(Loading...)</span>}
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
-                  <input 
-                    className="input bg-gray-50" 
-                    value={vendorDetails.email} 
-                    readOnly
-                    placeholder={form.vendor_id ? "Enter valid Vendor ID" : "Auto-filled when Vendor ID is entered"}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Phone Number</label>
-                  <input 
-                    className="input bg-gray-50" 
-                    value={vendorDetails.mobile} 
-                    readOnly
-                    placeholder={form.vendor_id ? "Enter valid Vendor ID" : "Auto-filled when Vendor ID is entered"}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">GST Number</label>
-                  <input 
-                    className="input bg-gray-50 font-mono text-sm" 
-                    value={vendorDetails.gst_number} 
-                    readOnly
-                    placeholder={form.vendor_id ? "Enter valid Vendor ID" : "Auto-filled when Vendor ID is entered"}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Address</label>
-                  <input 
-                    className="input bg-gray-50" 
-                    value={vendorDetails.address} 
-                    readOnly
-                    placeholder={form.vendor_id ? "Enter valid Vendor ID" : "Auto-filled when Vendor ID is entered"}
-                  />
+            {vendorDetails.name && (
+              <div className="md:col-span-3 border-t pt-4 mt-2">
+                <h4 className="text-sm font-medium text-gray-800 mb-3 flex items-center">
+                  Vendor Contact Details
+                  <span className="ml-2 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                    {vendorDetails.name}
+                  </span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
+                    <input 
+                      className="input bg-gray-50" 
+                      value={vendorDetails.email} 
+                      readOnly
+                      placeholder="No email provided"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Phone Number</label>
+                    <input 
+                      className="input bg-gray-50" 
+                      value={vendorDetails.mobile} 
+                      readOnly
+                      placeholder="No phone provided"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">GST Number</label>
+                    <input 
+                      className="input bg-gray-50 font-mono text-sm" 
+                      value={vendorDetails.gst_number} 
+                      readOnly
+                      placeholder="No GST provided"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Address</label>
+                    <input 
+                      className="input bg-gray-50" 
+                      value={vendorDetails.address} 
+                      readOnly
+                      placeholder="No address provided"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
           <LineItemsTable items={items} setItems={setItems} />
           <div className="flex justify-end mt-4 space-x-3">
