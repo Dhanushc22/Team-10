@@ -15,6 +15,8 @@ Desktop.ini
 # keep example envs
 !backend/env.example
 
+db.sqlite3
+
 # --- Python / Django (backend) ---
 backend/venv/
 **/__pycache__/
