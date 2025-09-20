@@ -8,7 +8,7 @@ class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact
         fields = ['id', 'name', 'type', 'email', 'mobile', 'address', 
-                 'city', 'state', 'pincode', 'profile_image', 'user', 
+                 'city', 'state', 'pincode', 'gst_number', 'profile_image', 'user', 
                  'is_active', 'created_at', 'updated_at']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
@@ -67,7 +67,7 @@ class ContactListSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Contact
-        fields = ['id', 'name', 'type', 'email', 'mobile']
+        fields = ['id', 'name', 'type', 'email', 'mobile', 'gst_number']
 
 
 class ProductListSerializer(serializers.ModelSerializer):
@@ -75,7 +75,8 @@ class ProductListSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Product
-        fields = ['id', 'name', 'type', 'sales_price', 'purchase_price', 'hsn_code']
+        fields = ['id', 'name', 'type', 'sales_price', 'purchase_price', 
+                 'sale_tax_percent', 'purchase_tax_percent', 'hsn_code']
 
 
 class TaxListSerializer(serializers.ModelSerializer):

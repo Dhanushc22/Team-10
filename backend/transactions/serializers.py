@@ -31,8 +31,8 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = PurchaseOrder
         fields = ['id', 'po_number', 'po_date', 'vendor', 'vendor_id', 'vendor_name',
-                 'delivery_date', 'payment_terms', 'status', 'subtotal', 'tax_total',
-                 'grand_total', 'notes', 'items', 'created_by_name', 'created_at', 'updated_at']
+                 'delivery_date', 'status', 'subtotal', 'tax_total',
+                 'grand_total', 'items', 'created_by_name', 'created_at', 'updated_at']
         read_only_fields = ['id', 'po_number', 'subtotal', 'tax_total', 'grand_total', 'created_at', 'updated_at']
 
 
@@ -60,9 +60,9 @@ class VendorBillSerializer(serializers.ModelSerializer):
     class Meta:
         model = VendorBill
         fields = ['id', 'bill_number', 'vendor', 'vendor_id', 'vendor_name',
-                 'bill_date', 'due_date', 'payment_terms', 'purchase_order',
+                 'bill_date', 'due_date', 'purchase_order',
                  'status', 'subtotal', 'tax_total', 'grand_total', 'paid_amount',
-                 'balance_due', 'notes', 'items', 'created_by_name', 'created_at', 'updated_at']
+                 'balance_due', 'items', 'created_by_name', 'created_at', 'updated_at']
         read_only_fields = ['id', 'bill_number', 'subtotal', 'tax_total', 'grand_total', 
                            'paid_amount', 'balance_due', 'created_at', 'updated_at']
 
@@ -91,8 +91,8 @@ class SalesOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = SalesOrder
         fields = ['id', 'so_number', 'so_date', 'customer', 'customer_id', 'customer_name',
-                 'delivery_date', 'payment_terms', 'status', 'subtotal', 'tax_total',
-                 'grand_total', 'notes', 'items', 'created_by_name', 'created_at', 'updated_at']
+                 'delivery_date', 'status', 'subtotal', 'tax_total',
+                 'grand_total', 'items', 'created_by_name', 'created_at', 'updated_at']
         read_only_fields = ['id', 'so_number', 'subtotal', 'tax_total', 'grand_total', 'created_at', 'updated_at']
 
 
@@ -120,9 +120,9 @@ class CustomerInvoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomerInvoice
         fields = ['id', 'invoice_number', 'customer', 'customer_id', 'customer_name',
-                 'invoice_date', 'due_date', 'payment_terms', 'reference', 'sales_order',
+                 'invoice_date', 'due_date', 'reference', 'sales_order',
                  'status', 'subtotal', 'tax_total', 'grand_total', 'paid_amount',
-                 'balance_due', 'notes', 'items', 'created_by_name', 'created_at', 'updated_at']
+                 'balance_due', 'items', 'created_by_name', 'created_at', 'updated_at']
         read_only_fields = ['id', 'invoice_number', 'subtotal', 'tax_total', 'grand_total', 
                            'paid_amount', 'balance_due', 'created_at', 'updated_at']
 
@@ -150,7 +150,7 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = ['id', 'payment_number', 'payment_type', 'contact', 'contact_id', 'contact_name',
-                 'payment_date', 'payment_method', 'amount', 'reference', 'notes',
+                 'payment_date', 'payment_method', 'amount', 'reference',
                  'allocations', 'created_by_name', 'created_at', 'updated_at']
         read_only_fields = ['id', 'payment_number', 'created_at', 'updated_at']
 

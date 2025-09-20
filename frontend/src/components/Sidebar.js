@@ -4,7 +4,6 @@ import {
   LayoutDashboard, 
   Users, 
   Package, 
-  Percent, 
   BookOpen,
   ShoppingCart,
   FileText,
@@ -13,7 +12,9 @@ import {
   TrendingUp,
   Package2,
   UserCheck,
-  LogOut
+  LogOut,
+  Settings,
+  Shield
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -31,7 +32,6 @@ const Sidebar = () => {
     { name: 'Master Data', href: '#', icon: BookOpen, children: [
       { name: 'Contacts', href: '/master-data/contacts', icon: Users },
       { name: 'Products', href: '/master-data/products', icon: Package },
-      { name: 'Taxes', href: '/master-data/taxes', icon: Percent },
       { name: 'Chart of Accounts', href: '/master-data/chart-of-accounts', icon: BookOpen },
     ]},
     { name: 'Transactions', href: '#', icon: FileText, children: [
@@ -49,6 +49,13 @@ const Sidebar = () => {
     ]},
   ];
 
+  // Admin Only Navigation
+  const adminOnlyNavItems = [
+    { name: 'Administration', href: '#', icon: Settings, children: [
+      { name: 'User Management', href: '/admin/users', icon: Shield },
+    ]},
+  ];
+
   // Contact User Navigation
   const contactNavItems = [
     { name: 'My Dashboard', href: '/contact-dashboard', icon: LayoutDashboard },
@@ -56,7 +63,39 @@ const Sidebar = () => {
     { name: 'My Bills', href: '/contact-dashboard', icon: FileText },
   ];
 
-  const navItems = isContact ? contactNavItems : adminNavItems;
+  const invoicingNavItems = [
+    { name: 'Invoicing Dashboard', href: '/invoicing-dashboard', icon: LayoutDashboard },
+    { name: 'Master Data', href: '#', icon: BookOpen, children: [
+      { name: 'Contacts', href: '/master-data/contacts', icon: Users },
+      { name: 'Products', href: '/master-data/products', icon: Package },
+      { name: 'Chart of Accounts', href: '/master-data/chart-of-accounts', icon: BookOpen },
+    ]},
+    { name: 'Transactions', href: '#', icon: FileText, children: [
+      { name: 'Customer Invoices', href: '/transactions/customer-invoices', icon: FileText },
+      { name: 'Sales Orders', href: '/transactions/sales-orders', icon: ShoppingCart },
+      { name: 'Vendor Bills', href: '/transactions/vendor-bills', icon: FileText },
+      { name: 'Purchase Orders', href: '/transactions/purchase-orders', icon: ShoppingCart },
+      { name: 'Payments', href: '/transactions/payments', icon: CreditCard },
+    ]},
+    { name: 'Reports', href: '#', icon: BarChart3, children: [
+      { name: 'Balance Sheet', href: '/reports/balance-sheet', icon: TrendingUp },
+      { name: 'Profit & Loss', href: '/reports/profit-loss', icon: BarChart3 },
+      { name: 'Stock Report', href: '/reports/stock-report', icon: Package2 },
+      { name: 'Partner Ledger', href: '/reports/partner-ledger', icon: UserCheck },
+    ]},
+  ];
+
+  // Determine navigation items based on user role
+  let navItems;
+  if (isContact) {
+    navItems = contactNavItems;
+  } else if (user?.role === 'admin') {
+    navItems = [...adminNavItems, ...adminOnlyNavItems];
+  } else if (user?.role === 'invoicing_user') {
+    navItems = invoicingNavItems;
+  } else {
+    navItems = adminNavItems;
+  }
 
   const renderNavItem = (item) => {
     const Icon = item.icon;
@@ -102,9 +141,9 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="sidebar w-64 min-h-screen">
+    <div className="sidebar w-64 h-screen flex flex-col relative">
       {/* Logo */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center">
           <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">SA</span>
@@ -117,12 +156,12 @@ const Sidebar = () => {
       </div>
 
       {/* Navigation */}
-      <nav className="mt-6 px-4">
+      <nav className="flex-1 mt-6 px-4 overflow-y-auto">
         {navItems.map(renderNavItem)}
       </nav>
 
       {/* User Info and Logout */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
+      <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white">
         <div className="flex items-center mb-3">
           <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
             <span className="text-sm font-medium text-gray-700">

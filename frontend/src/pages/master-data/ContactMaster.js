@@ -89,6 +89,7 @@ const ContactMaster = () => {
     setValue('city', contact.city);
     setValue('state', contact.state);
     setValue('pincode', contact.pincode);
+    setValue('gst_number', contact.gst_number);
     setShowForm(true);
   };
 
@@ -258,6 +259,31 @@ const ContactMaster = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
+                    GST Number
+                  </label>
+                  <input
+                    {...register('gst_number', {
+                      pattern: {
+                        value: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/,
+                        message: 'Invalid GST number format (e.g., 22AAAAA0000A1Z5)'
+                      }
+                    })}
+                    type="text"
+                    className="input"
+                    placeholder="e.g., 22AAAAA0000A1Z5"
+                    maxLength="15"
+                    style={{ textTransform: 'uppercase' }}
+                  />
+                  {errors.gst_number && (
+                    <p className="text-sm text-red-600 mt-1">{errors.gst_number.message}</p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    GST format: 2 digits state code + 10 alphanumeric PAN + 1 check digit + Z + 1 code
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Profile Image
                   </label>
                   <div className="flex items-center space-x-4">
@@ -348,10 +374,12 @@ const ContactMaster = () => {
               <table className="table">
                 <thead>
                   <tr>
+                    <th>ID</th>
                     <th>Name</th>
                     <th>Type</th>
                     <th>Email</th>
                     <th>Mobile</th>
+                    <th>GST Number</th>
                     <th>Address</th>
                     <th>Actions</th>
                   </tr>
@@ -359,19 +387,24 @@ const ContactMaster = () => {
                 <tbody>
                   {isLoading ? (
                     <tr>
-                      <td colSpan="6" className="text-center py-8">
+                      <td colSpan="7" className="text-center py-8">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
                       </td>
                     </tr>
                   ) : contacts.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="text-center py-8 text-gray-500">
+                      <td colSpan="7" className="text-center py-8 text-gray-500">
                         No contacts found
                       </td>
                     </tr>
                   ) : (
                     contacts.map((contact) => (
                       <tr key={contact.id} className="hover:bg-gray-50">
+                        <td>
+                          <span className="font-mono text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                            {contact.id}
+                          </span>
+                        </td>
                         <td>
                           <div className="flex items-center">
                             <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mr-3">
@@ -392,6 +425,11 @@ const ContactMaster = () => {
                         </td>
                         <td className="text-gray-600">{contact.email || '-'}</td>
                         <td className="text-gray-600">{contact.mobile || '-'}</td>
+                        <td className="text-gray-600">
+                          {contact.gst_number ? (
+                            <span className="font-mono text-sm">{contact.gst_number}</span>
+                          ) : '-'}
+                        </td>
                         <td className="text-gray-600">
                           {contact.address ? (
                             <div>

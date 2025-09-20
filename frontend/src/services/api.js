@@ -16,10 +16,14 @@ api.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Token ${token}`;
+      console.log('🔑 API Request with token:', config.url, 'Token exists:', !!token);
+    } else {
+      console.warn('⚠️ API Request without token:', config.url);
     }
     return config;
   },
   (error) => {
+    console.error('🚫 API Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -125,6 +129,27 @@ export const transactionsAPI = {
   // Summary
   getTransactionSummary: () => api.get('/transactions/summary/'),
   getPendingTransactions: () => api.get('/transactions/pending/'),
+
+  // Conversions
+  convertSalesOrderToInvoice: (id) => api.post(`/transactions/sales-orders/${id}/convert-to-invoice/`),
+  convertPurchaseOrderToBill: (id) => api.post(`/transactions/purchase-orders/${id}/convert-to-bill/`),
+
+  // Quick payments
+  quickAllocatePayment: (payload) => api.post('/transactions/payments/quick-allocate/', payload),
+
+  // Create/Update with items (SO)
+  createSalesOrderWithItems: (data) => api.post('/transactions/sales-orders/create-with-items/', data),
+  updateSalesOrderWithItems: (id, data) => api.put(`/transactions/sales-orders/${id}/update-with-items/`, data),
+
+  // Create/Update with items (PO)
+  createPurchaseOrderWithItems: (data) => api.post('/transactions/purchase-orders/create-with-items/', data),
+  updatePurchaseOrderWithItems: (id, data) => api.put(`/transactions/purchase-orders/${id}/update-with-items/`, data),
+
+  // Create/Update with items (Invoice/Bill)
+  createCustomerInvoiceWithItems: (data) => api.post('/transactions/customer-invoices/create-with-items/', data),
+  updateCustomerInvoiceWithItems: (id, data) => api.put(`/transactions/customer-invoices/${id}/update-with-items/`, data),
+  createVendorBillWithItems: (data) => api.post('/transactions/vendor-bills/create-with-items/', data),
+  updateVendorBillWithItems: (id, data) => api.put(`/transactions/vendor-bills/${id}/update-with-items/`, data),
 };
 
 // Reports API
