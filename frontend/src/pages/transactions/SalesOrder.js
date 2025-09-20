@@ -4,6 +4,9 @@ import { transactionsAPI } from '../../services/api';
 import { toast } from 'react-hot-toast';
 import LineItemsTable from '../../components/LineItemsTable';
 import AsyncContactSelect from '../../components/AsyncContactSelect';
+import ProductTestDebug from '../../components/ProductTestDebug';
+import ProductDebugger from '../../components/ProductDebugger';
+import SimpleProductTest from '../../components/SimpleProductTest';
 
 const SalesOrder = () => {
   const queryClient = useQueryClient();
@@ -33,18 +36,58 @@ const SalesOrder = () => {
   }]);
   const [customerDetails, setCustomerDetails] = useState({ name: '', email: '', mobile: '', address: '', gst_number: '' });
 
+  // Function to check if form can be saved
+  const canSave = () => {
+    const hasCustomer = form.customer_id && form.customer_id !== '';
+    const validItems = items.filter(item => item.product_id && item.product_id !== '');
+    const hasValidItems = validItems.length > 0;
+    
+    // Check if all valid items are complete
+    const completeItems = validItems.filter(item => 
+      item.product_id && item.quantity > 0 && 
+      item.unit_price !== undefined && item.unit_price !== null && 
+      item.unit_price !== '' && item.unit_price >= 0
+    );
+    
+    return hasCustomer && hasValidItems && completeItems.length === validItems.length;
+  };
+
   const createMutation = useMutation(() => {
-    // Client-side validation
+    // Enhanced client-side validation with better error messages
     if (!form.customer_id) {
-      throw new Error('Customer ID is required');
+      throw new Error('Please select a customer before saving the sales order');
     }
-    if (!items.length || items.some(item => !item.product_id || !item.quantity || !item.unit_price)) {
-      throw new Error('At least one complete line item is required (product, quantity, unit price)');
+    
+    // Filter items that have been started (have product_id)
+    const validItems = items.filter(item => item.product_id && item.product_id !== '');
+    
+    // Check if we have at least one valid item
+    if (validItems.length === 0) {
+      throw new Error('Please add at least one product to the line items before saving. Click "Add Line" and select a product from the dropdown.');
+    }
+    
+    // Validate that all started items are complete
+    const incompleteItems = validItems.filter(item => 
+      !item.product_id || !item.quantity || item.quantity <= 0 || 
+      item.unit_price === undefined || item.unit_price === null || item.unit_price === '' || item.unit_price < 0
+    );
+    
+    if (incompleteItems.length > 0) {
+      throw new Error('Please complete all line items: each item must have a product selected, quantity greater than 0, and a valid unit price');
+    }
+    
+    // Additional validation for empty items in the middle
+    const allItems = items.filter(item => 
+      item.product_id || item.quantity > 1 || item.unit_price > 0
+    );
+    
+    if (allItems.length > validItems.length) {
+      throw new Error('Some line items are incomplete. Please either complete them by selecting products or remove the incomplete rows.');
     }
     
     const payload = {
       ...form,
-      items: items.filter(item => item.product_id) // Only send complete items
+      items: validItems // Only send complete items
     };
     
     console.log('SO Payload:', payload); // Debug log
@@ -86,6 +129,11 @@ const SalesOrder = () => {
       {showForm && (
         <div className="card p-6">
           <h3 className="text-lg font-semibold mb-4">New Sales Order</h3>
+          
+          {/* Debug Components - Remove these after debugging */}
+          <SimpleProductTest />
+          <ProductTestDebug />
+          <ProductDebugger />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Select Customer *</label>
@@ -172,7 +220,14 @@ const SalesOrder = () => {
           <LineItemsTable items={items} setItems={setItems} transactionType="sales" />
           <div className="flex justify-end mt-4 space-x-3">
             <button className="btn btn-secondary" onClick={()=>setShowForm(false)}>Cancel</button>
-            <button className="btn btn-primary" onClick={()=>createMutation.mutate()}>Save Sales Order</button>
+            <button 
+              className={`btn ${canSave() ? 'btn-primary' : 'btn-disabled'}`}
+              onClick={()=>createMutation.mutate()}
+              disabled={!canSave() || createMutation.isLoading}
+              title={!canSave() ? 'Please select a customer and add at least one product line item' : 'Save Sales Order'}
+            >
+              {createMutation.isLoading ? 'Saving...' : 'Save Sales Order'}
+            </button>
           </div>
         </div>
       )}

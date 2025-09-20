@@ -31,13 +31,27 @@ const LineItemsTable = ({ items, setItems, transactionType = 'sales' }) => {
 
   // Handle product selection from AsyncProductSelect
   const handleProductChange = (idx, productId) => {
+    console.log(`🔄 LineItemsTable: Product ID changed for row ${idx}:`, productId, 'Type:', typeof productId);
+    console.log(`📊 LineItemsTable: Current item before update:`, items[idx]);
+    
     const next = [...items];
     next[idx] = { ...next[idx], product_id: productId };
+    
+    console.log(`✅ LineItemsTable: Updated item:`, next[idx]);
+    console.log(`📋 LineItemsTable: Full updated array:`, next);
+    
     setItems(next);
+    
+    // Verify state after update (using setTimeout to check after state update)
+    setTimeout(() => {
+      console.log(`🔍 LineItemsTable: State after update - item ${idx}:`, items[idx]);
+      console.log(`🎯 LineItemsTable: product_id is now:`, items[idx]?.product_id);
+    }, 100);
   };
 
   // Handle product details auto-fill from AsyncProductSelect
   const handleProductDetails = (idx, productDetails) => {
+    console.log(`📝 Product details received for row ${idx}:`, productDetails);
     const next = [...items];
     const quantity = parseFloat(next[idx].quantity) || 0;
     const unitPrice = parseFloat(productDetails.price) || 0;
@@ -47,7 +61,7 @@ const LineItemsTable = ({ items, setItems, transactionType = 'sales' }) => {
     const taxAmount = (subtotal * taxPercent) / 100;
     const total = subtotal + taxAmount;
 
-    next[idx] = {
+    const updatedItem = {
       ...next[idx],
       product_name: productDetails.name,
       unit_price: unitPrice,
@@ -56,7 +70,9 @@ const LineItemsTable = ({ items, setItems, transactionType = 'sales' }) => {
       tax_amount: taxAmount,
       total: total
     };
-    
+
+    next[idx] = updatedItem;
+    console.log(`✅ Updated item ${idx}:`, updatedItem);
     setItems(next);
   };
 
@@ -92,13 +108,25 @@ const LineItemsTable = ({ items, setItems, transactionType = 'sales' }) => {
 
   return (
     <div className="space-y-4">
+      {/* Instructions for users */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <div className="flex items-center">
+          <svg className="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+          </svg>
+          <span className="text-sm text-blue-800 font-medium">
+            Add at least one product to create the order. Use "Add Line" to add more items.
+          </span>
+        </div>
+      </div>
+      
       <div className="overflow-x-auto" style={{ minHeight: '200px' }}>
         <table className="table">
           <thead>
             <tr>
-              <th>Product Name</th>
-              <th>Qty</th>
-              <th>Unit Price</th>
+              <th>Product Name <span className="text-red-500">*</span></th>
+              <th>Qty <span className="text-red-500">*</span></th>
+              <th>Unit Price <span className="text-red-500">*</span></th>
               <th>Tax %</th>
               <th>Without Tax</th>
               <th>With Tax</th>
@@ -116,8 +144,21 @@ const LineItemsTable = ({ items, setItems, transactionType = 'sales' }) => {
               const taxAmount = (subtotal * taxPercent) / 100;
               const total = subtotal + taxAmount;
 
+              const isRowIncomplete = !item.product_id || quantity <= 0 || unitPrice <= 0;
+              const hasAnyData = item.product_id || quantity > 0 || unitPrice > 0;
+              
+              // Debug logging for each item render
+              console.log(`🔍 LineItemsTable RENDER: Item ${idx}:`, {
+                product_id: item.product_id,
+                product_name: item.product_name,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                isRowIncomplete,
+                hasAnyData
+              });
+              
               return (
-              <tr key={idx}>
+              <tr key={idx} className={isRowIncomplete && hasAnyData ? 'bg-red-50 border-l-4 border-red-400' : ''}>
                 <td style={{ width: '250px' }}>
                   <AsyncProductSelect
                     value={item.product_id}
@@ -127,25 +168,48 @@ const LineItemsTable = ({ items, setItems, transactionType = 'sales' }) => {
                     placeholder="Search products..."
                     required={true}
                   />
+                  {!item.product_id && hasAnyData && (
+                    <div className="text-xs text-red-600 mt-1">
+                      Product selection required 
+                      <span className="font-mono ml-1">
+                        (ID: "{item.product_id}", Type: {typeof item.product_id})
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Debug: Manual test button */}
+                  <button 
+                    onClick={() => handleProductChange(idx, 2)}
+                    className="text-xs bg-yellow-200 hover:bg-yellow-300 px-1 py-0.5 rounded mt-1"
+                    type="button"
+                  >
+                    Test Set ID=2
+                  </button>
                 </td>
                 <td>
                   <input 
                     type="number" 
-                    className="input w-20" 
+                    className={`input w-20 ${quantity <= 0 && hasAnyData ? 'border-red-300 bg-red-50' : ''}`}
                     value={item.quantity} 
                     onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))} 
                     min="1"
                   />
+                  {quantity <= 0 && hasAnyData && (
+                    <div className="text-xs text-red-600 mt-1">Qty must be > 0</div>
+                  )}
                 </td>
                 <td>
                   <input 
                     type="number" 
                     step="0.01" 
-                    className="input w-28" 
+                    className={`input w-28 ${unitPrice <= 0 && hasAnyData ? 'border-red-300 bg-red-50' : ''}`}
                     value={item.unit_price} 
                     onChange={(e) => updateItem(idx, 'unit_price', Number(e.target.value))} 
                     min="0"
                   />
+                  {unitPrice <= 0 && hasAnyData && (
+                    <div className="text-xs text-red-600 mt-1">Price required</div>
+                  )}
                 </td>
                 <td>
                   <input 

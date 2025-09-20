@@ -114,18 +114,21 @@ def dashboard_data(request):
         from django.db.models import Sum, Count, Q
         from decimal import Decimal
         
-        # Calculate real totals - include all invoices/bills
+        # Calculate real totals - include all invoices/bills (Accrual Accounting)
         total_sales = CustomerInvoice.objects.aggregate(
             total=Sum('grand_total'))['total'] or Decimal('0')
         total_purchases = VendorBill.objects.aggregate(
             total=Sum('grand_total'))['total'] or Decimal('0')
         
-        # Calculate proper Net Profit: Total Revenue (paid invoices) - Total Costs (paid bills)
+        # Calculate Net Profit using Accrual Accounting: All Sales - All Purchases
+        # This matches the P&L report calculation for consistency
+        net_profit = total_sales - total_purchases
+        
+        # Separate revenue/costs for cash flow analysis
         revenue = CustomerInvoice.objects.filter(status='paid').aggregate(
             total=Sum('grand_total'))['total'] or Decimal('0')
         costs = VendorBill.objects.filter(status='paid').aggregate(
             total=Sum('grand_total'))['total'] or Decimal('0')
-        net_profit = revenue - costs
         
         # Calculate cash balance from actual payments
         customer_payments = Payment.objects.filter(payment_type='customer_payment').aggregate(

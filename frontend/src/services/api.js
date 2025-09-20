@@ -16,10 +16,14 @@ api.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Token ${token}`;
+      console.log('🔑 API Request with token:', config.url, 'Token exists:', !!token);
+    } else {
+      console.warn('⚠️ API Request without token:', config.url);
     }
     return config;
   },
   (error) => {
+    console.error('🚫 API Request interceptor error:', error);
     return Promise.reject(error);
   }
 );

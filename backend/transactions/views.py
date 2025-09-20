@@ -400,6 +400,9 @@ def quick_allocate_payment(request):
                 allocated_amount=amount,
             )
             invoice.paid_amount = (invoice.paid_amount or 0) + amount
+            # Auto-update status when fully paid
+            if invoice.paid_amount >= invoice.grand_total:
+                invoice.status = 'paid'
             invoice.save()
             return Response({'message': 'Payment allocated to invoice', 'payment_number': payment.payment_number})
         else:
@@ -420,6 +423,9 @@ def quick_allocate_payment(request):
                 allocated_amount=amount,
             )
             bill.paid_amount = (bill.paid_amount or 0) + amount
+            # Auto-update status when fully paid
+            if bill.paid_amount >= bill.grand_total:
+                bill.status = 'paid'
             bill.save()
             return Response({'message': 'Payment allocated to bill', 'payment_number': payment.payment_number})
 
@@ -452,7 +458,10 @@ def create_sales_order_with_items(request):
     payload = request.data
     items = payload.get('items', [])
     if not items:
-        return Response({'error': 'At least one line item is required'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            'error': 'At least one line item with a selected product is required',
+            'details': 'Please add products to the line items before saving.'
+        }, status=status.HTTP_400_BAD_REQUEST)
 
     with db_transaction.atomic():
         customer_id = payload.get('customer_id')
@@ -498,7 +507,10 @@ def update_sales_order_with_items(request, pk):
     payload = request.data
     items = payload.get('items', [])
     if not items:
-        return Response({'error': 'At least one line item is required'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            'error': 'At least one line item with a selected product is required',
+            'details': 'Please add products to the line items before saving.'
+        }, status=status.HTTP_400_BAD_REQUEST)
 
     with db_transaction.atomic():
         so = get_object_or_404(SalesOrder, pk=pk)
@@ -542,7 +554,10 @@ def create_purchase_order_with_items(request):
     payload = request.data
     items = payload.get('items', [])
     if not items:
-        return Response({'error': 'At least one line item is required'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            'error': 'At least one line item with a selected product is required',
+            'details': 'Please add products to the line items before saving.'
+        }, status=status.HTTP_400_BAD_REQUEST)
 
     with db_transaction.atomic():
         vendor_id = payload.get('vendor_id')
@@ -588,7 +603,10 @@ def update_purchase_order_with_items(request, pk):
     payload = request.data
     items = payload.get('items', [])
     if not items:
-        return Response({'error': 'At least one line item is required'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            'error': 'At least one line item with a selected product is required',
+            'details': 'Please add products to the line items before saving.'
+        }, status=status.HTTP_400_BAD_REQUEST)
 
     with db_transaction.atomic():
         po = get_object_or_404(PurchaseOrder, pk=pk)
@@ -630,7 +648,10 @@ def create_customer_invoice_with_items(request):
     payload = request.data
     items = payload.get('items', [])
     if not items:
-        return Response({'error': 'At least one line item is required'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            'error': 'At least one line item with a selected product is required',
+            'details': 'Please add products to the line items before saving.'
+        }, status=status.HTTP_400_BAD_REQUEST)
 
     with db_transaction.atomic():
         customer = get_object_or_404(Contact, pk=payload.get('customer_id'))
@@ -675,7 +696,10 @@ def update_customer_invoice_with_items(request, pk):
     payload = request.data
     items = payload.get('items', [])
     if not items:
-        return Response({'error': 'At least one line item is required'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            'error': 'At least one line item with a selected product is required',
+            'details': 'Please add products to the line items before saving.'
+        }, status=status.HTTP_400_BAD_REQUEST)
     with db_transaction.atomic():
         inv = get_object_or_404(CustomerInvoice, pk=pk)
         if 'customer_id' in payload:
@@ -715,7 +739,10 @@ def create_vendor_bill_with_items(request):
     payload = request.data
     items = payload.get('items', [])
     if not items:
-        return Response({'error': 'At least one line item is required'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            'error': 'At least one line item with a selected product is required',
+            'details': 'Please add products to the line items before saving.'
+        }, status=status.HTTP_400_BAD_REQUEST)
     with db_transaction.atomic():
         vendor = get_object_or_404(Contact, pk=payload.get('vendor_id'))
         subtotal, tax_total, grand_total = _calc_totals_from_items(items)
@@ -758,7 +785,10 @@ def update_vendor_bill_with_items(request, pk):
     payload = request.data
     items = payload.get('items', [])
     if not items:
-        return Response({'error': 'At least one line item is required'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            'error': 'At least one line item with a selected product is required',
+            'details': 'Please add products to the line items before saving.'
+        }, status=status.HTTP_400_BAD_REQUEST)
     with db_transaction.atomic():
         bill = get_object_or_404(VendorBill, pk=pk)
         if 'vendor_id' in payload:

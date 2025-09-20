@@ -18,6 +18,7 @@ const AsyncProductSelect = ({
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [isSelectingProduct, setIsSelectingProduct] = useState(false);
   
   const queryClient = useQueryClient();
   const inputRef = useRef(null);
@@ -32,7 +33,7 @@ const AsyncProductSelect = ({
   }, [searchTerm]);
 
   // Search products with React Query
-  const { data: searchResults = [], isLoading } = useQuery(
+  const { data: searchResults = [], isLoading, error } = useQuery(
     ['products-search', debouncedSearch],
     () => {
       if (!debouncedSearch.trim()) return [];
@@ -40,11 +41,20 @@ const AsyncProductSelect = ({
         search: debouncedSearch.trim(),
         page_size: 10
       };
-      return masterDataAPI.getProducts(params).then(res => res.data.results || res.data || []);
+      console.log('🔍 Searching products with params:', params);
+      return masterDataAPI.getProducts(params).then(res => {
+        console.log('✅ Product search response:', res.data);
+        return res.data.results || res.data || [];
+      }).catch(err => {
+        console.error('❌ Product search error:', err);
+        toast.error('Failed to search products. Please check your connection.');
+        throw err;
+      });
     },
     {
       enabled: debouncedSearch.length > 0,
       staleTime: 30000, // Cache for 30 seconds
+      retry: 2,
     }
   );
 
@@ -115,23 +125,44 @@ const AsyncProductSelect = ({
   // Handle input change
   const handleInputChange = (e) => {
     const newValue = e.target.value;
+    console.log('📝 AsyncProductSelect: Input changed to:', newValue, 'isSelectingProduct:', isSelectingProduct);
+    
     setSearchTerm(newValue);
     setIsOpen(true);
     setSelectedIndex(-1);
     
-    // If user clears the input, clear the selection
-    if (!newValue) {
+    // Only clear the selection if user manually clears the input AND we're not in the middle of selecting a product
+    if (!newValue && !isSelectingProduct) {
+      console.log('🧹 AsyncProductSelect: Clearing selection due to empty input');
       onChange('');
       if (onProductDetails) {
         onProductDetails({ name: '', type: '', price: 0, tax_percent: 0, hsn_code: '', category: '' });
       }
+    } else if (newValue && !isSelectingProduct) {
+      // User is typing to search, don't clear the existing selection unless they explicitly clear it
+      console.log('🔍 AsyncProductSelect: User typing to search, not clearing selection');
     }
   };
 
   // Handle product selection
   const handleSelectProduct = (product) => {
+    console.log('🎯 AsyncProductSelect: Product selected:', product);
+    console.log('🔢 AsyncProductSelect: Product ID to send:', product.id, 'Type:', typeof product.id);
+    console.log('📞 AsyncProductSelect: About to call onChange with ID:', product.id);
+    
+    // Set flag to prevent input change from clearing selection
+    setIsSelectingProduct(true);
     setSearchTerm(product.name);
-    onChange(product.id);
+    
+    // Call onChange with detailed logging
+    if (onChange) {
+      console.log('✅ AsyncProductSelect: Calling onChange callback...');
+      onChange(product.id);
+      console.log('✅ AsyncProductSelect: onChange callback completed');
+    } else {
+      console.error('❌ AsyncProductSelect: onChange callback is not defined!');
+    }
+    
     setIsOpen(false);
     setSelectedIndex(-1);
     
@@ -139,15 +170,28 @@ const AsyncProductSelect = ({
       const price = transactionType === 'sales' ? product.sales_price : product.purchase_price;
       const taxRate = transactionType === 'sales' ? product.sale_tax_percent : product.purchase_tax_percent;
       
-      onProductDetails({
+      const productDetails = {
         name: product.name || '',
         type: product.type || '',
         price: price || 0,
         tax_percent: taxRate || 0,
         hsn_code: product.hsn_code || '',
         category: product.category || ''
-      });
+      };
+      
+      console.log('📋 AsyncProductSelect: Product details being sent:', productDetails);
+      console.log('📞 AsyncProductSelect: About to call onProductDetails...');
+      onProductDetails(productDetails);
+      console.log('✅ AsyncProductSelect: onProductDetails callback completed');
+    } else {
+      console.warn('⚠️ AsyncProductSelect: onProductDetails callback is not defined');
     }
+    
+    // Reset the flag after a short delay to allow for the selection to complete
+    setTimeout(() => {
+      setIsSelectingProduct(false);
+      console.log('🏁 AsyncProductSelect: handleSelectProduct completed, flag reset');
+    }, 100);
   };
 
   // Keyboard navigation
@@ -235,8 +279,16 @@ const AsyncProductSelect = ({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute z-[999] mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
              style={{ minWidth: '300px' }}>
+          
+          {/* Error Display */}
+          {error && (
+            <div className="px-4 py-3 text-sm text-red-600 bg-red-50 border-b border-red-200">
+              ⚠️ Error loading products. Please check your connection and try again.
+            </div>
+          )}
+          
           {/* Search Results */}
           {searchResults.length > 0 ? (
             <div className="py-1">
@@ -246,7 +298,23 @@ const AsyncProductSelect = ({
                   className={`px-4 py-3 cursor-pointer flex items-start space-x-3 ${
                     index === selectedIndex ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
                   }`}
-                  onClick={() => handleSelectProduct(product)}
+                  onClick={(e) => {
+                    console.log('🖱️ CLICK EVENT FIRED for:', product.name, 'ID:', product.id);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    try {
+                      console.log('🎯 About to call handleSelectProduct...');
+                      handleSelectProduct(product);
+                      console.log('✅ handleSelectProduct completed successfully');
+                    } catch (error) {
+                      console.error('❌ Error in handleSelectProduct:', error);
+                    }
+                  }}
+                  onMouseDown={(e) => {
+                    console.log('🖱️ MOUSE DOWN event for:', product.name);
+                    e.preventDefault();
+                  }}
                 >
                   <div className="flex-shrink-0">
                     {product.type === 'goods' ? (
