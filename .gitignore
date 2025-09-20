@@ -19,6 +19,11 @@ db.sqlite3
 
 # --- Python / Django (backend) ---
 backend/venv/
+# Virtual environments (global)
+venv/
+.venv/
+**/venv/
+**/.venv/
 **/__pycache__/
 *.pyc
 *.pyo
@@ -26,12 +31,15 @@ backend/venv/
 *.egg-info/
 .python-version
 
-
+db.sqlite3
 
 # Django static/media outputs
 backend/staticfiles/
 backend/media/
 backend/static/
+
+# Local SQLite database (avoid committing dev DB)
+backend/db.sqlite3
 
 # Python tooling caches
 .mypy_cache/

@@ -4,17 +4,23 @@ Django settings for shiv_accounts project.
 
 from pathlib import Path
 import os
+from decouple import config, Csv
+
+try:
+    import dj_database_url  # type: ignore
+except Exception:  # pragma: no cover
+    dj_database_url = None
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-your-secret-key-here-for-hackathon'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-your-secret-key-here-for-hackathon')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', cast=bool, default=True)
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv(), default='localhost,127.0.0.1,0.0.0.0')
 
 # Application definition
 INSTALLED_APPS = [
@@ -67,12 +73,19 @@ TEMPLATES = [
 WSGI_APPLICATION = 'shiv_accounts.wsgi.application'
 
 # Database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Prefer DATABASE_URL (e.g., Postgres on a shared server) and fallback to local SQLite for dev.
+DATABASE_URL = config('DATABASE_URL', default='')
+if DATABASE_URL and dj_database_url:
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -129,10 +142,11 @@ REST_FRAMEWORK = {
 }
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
+CORS_ALLOWED_ORIGINS = config(
+    'CORS_ALLOWED_ORIGINS',
+    cast=Csv(),
+    default='http://localhost:3000,http://127.0.0.1:3000'
+)
 
 CORS_ALLOW_CREDENTIALS = True
 
