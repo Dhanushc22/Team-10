@@ -46,7 +46,7 @@ class ProductListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['type', 'category']
-    search_fields = ['name', 'hsn_code', 'category', '=id']  # Added =id for exact ID search
+    search_fields = ['name', 'hsn_code', 'category']
     ordering_fields = ['name', 'sales_price', 'created_at']
     ordering = ['name']
     
