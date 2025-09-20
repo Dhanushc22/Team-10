@@ -10,7 +10,6 @@ import Dashboard from './pages/Dashboard';
 import InvoicingDashboard from './pages/InvoicingDashboard';
 import ContactMaster from './pages/master-data/ContactMaster';
 import ProductMaster from './pages/master-data/ProductMaster';
-import TaxMaster from './pages/master-data/TaxMaster';
 import ChartOfAccounts from './pages/master-data/ChartOfAccounts';
 import PurchaseOrder from './pages/transactions/PurchaseOrder';
 import VendorBill from './pages/transactions/VendorBill';
@@ -84,7 +83,6 @@ function App() {
                 {/* Master Data Routes */}
                 <Route path="master-data/contacts" element={<ContactMaster />} />
                 <Route path="master-data/products" element={<ProductMaster />} />
-                <Route path="master-data/taxes" element={<TaxMaster />} />
                 <Route path="master-data/chart-of-accounts" element={<ChartOfAccounts />} />
                 
                 {/* Transaction Routes */}

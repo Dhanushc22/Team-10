@@ -4,7 +4,6 @@ import {
   LayoutDashboard, 
   Users, 
   Package, 
-  Percent, 
   BookOpen,
   ShoppingCart,
   FileText,
@@ -33,7 +32,6 @@ const Sidebar = () => {
     { name: 'Master Data', href: '#', icon: BookOpen, children: [
       { name: 'Contacts', href: '/master-data/contacts', icon: Users },
       { name: 'Products', href: '/master-data/products', icon: Package },
-      { name: 'Taxes', href: '/master-data/taxes', icon: Percent },
       { name: 'Chart of Accounts', href: '/master-data/chart-of-accounts', icon: BookOpen },
     ]},
     { name: 'Transactions', href: '#', icon: FileText, children: [
@@ -70,7 +68,6 @@ const Sidebar = () => {
     { name: 'Master Data', href: '#', icon: BookOpen, children: [
       { name: 'Contacts', href: '/master-data/contacts', icon: Users },
       { name: 'Products', href: '/master-data/products', icon: Package },
-      { name: 'Taxes', href: '/master-data/taxes', icon: Percent },
       { name: 'Chart of Accounts', href: '/master-data/chart-of-accounts', icon: BookOpen },
     ]},
     { name: 'Transactions', href: '#', icon: FileText, children: [
@@ -144,9 +141,9 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="sidebar w-64 min-h-screen">
+    <div className="sidebar w-64 h-screen flex flex-col relative">
       {/* Logo */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center">
           <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">SA</span>
@@ -159,12 +156,12 @@ const Sidebar = () => {
       </div>
 
       {/* Navigation */}
-      <nav className="mt-6 px-4">
+      <nav className="flex-1 mt-6 px-4 overflow-y-auto">
         {navItems.map(renderNavItem)}
       </nav>
 
       {/* User Info and Logout */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
+      <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white">
         <div className="flex items-center mb-3">
           <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
             <span className="text-sm font-medium text-gray-700">
