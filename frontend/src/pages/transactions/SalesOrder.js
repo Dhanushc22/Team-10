@@ -1,0 +1,211 @@
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { transactionsAPI } from '../../services/api';
+import { toast } from 'react-hot-toast';
+import LineItemsTable from '../../components/LineItemsTable';
+import AsyncContactSelect from '../../components/AsyncContactSelect';
+
+const SalesOrder = () => {
+  const queryClient = useQueryClient();
+  const { data: soData } = useQuery('sales-orders', () => transactionsAPI.getSalesOrders().then(r => r.data));
+  const convertMutation = useMutation((id) => transactionsAPI.convertSalesOrderToInvoice(id), {
+    onSuccess: () => {
+      toast.success('Converted to invoice');
+      queryClient.invalidateQueries('sales-orders');
+    },
+    onError: () => toast.error('Conversion failed')
+  });
+
+  // Create SO with items
+  const [showForm, setShowForm] = useState(false);
+  // Set today's date as default for SO date
+  const today = new Date().toISOString().split('T')[0];
+  const [form, setForm] = useState({ customer_id: '', so_date: today, delivery_date: '' });
+  const [items, setItems] = useState([{ 
+    product_id: '', 
+    product_name: '',
+    quantity: 1, 
+    unit_price: 0, 
+    tax_percent: 0,
+    subtotal: 0,
+    tax_amount: 0,
+    total: 0
+  }]);
+  const [customerDetails, setCustomerDetails] = useState({ name: '', email: '', mobile: '', address: '', gst_number: '' });
+
+  const createMutation = useMutation(() => {
+    // Client-side validation
+    if (!form.customer_id) {
+      throw new Error('Customer ID is required');
+    }
+    if (!items.length || items.some(item => !item.product_id || !item.quantity || !item.unit_price)) {
+      throw new Error('At least one complete line item is required (product, quantity, unit price)');
+    }
+    
+    const payload = {
+      ...form,
+      items: items.filter(item => item.product_id) // Only send complete items
+    };
+    
+    console.log('SO Payload:', payload); // Debug log
+    return transactionsAPI.createSalesOrderWithItems(payload);
+  }, {
+    onSuccess: () => { 
+      toast.success('Sales Order created'); 
+      setShowForm(false); 
+      setItems([{ 
+        product_id:'', 
+        product_name: '',
+        quantity:1, 
+        unit_price:0, 
+        tax_percent:0,
+        subtotal: 0,
+        tax_amount: 0,
+        total: 0
+      }]); 
+      setForm({ customer_id:'', so_date:today, delivery_date:'' });
+      setCustomerDetails({ name: '', email: '', mobile: '', address: '', gst_number: '' }); 
+      queryClient.invalidateQueries('sales-orders'); 
+    },
+    onError: (error) => {
+      console.error('SO Creation Error:', error);
+      toast.error(error?.response?.data?.error || error?.message || 'Failed to create sales order');
+    }
+  });
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Sales Orders</h1>
+        <div className="flex items-center justify-between">
+          <p className="text-gray-600">Create and manage sales orders</p>
+          <button className="btn btn-primary" onClick={()=>setShowForm(true)}>New Sales Order</button>
+        </div>
+      </div>
+      
+      {showForm && (
+        <div className="card p-6">
+          <h3 className="text-lg font-semibold mb-4">New Sales Order</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Select Customer *</label>
+              <AsyncContactSelect
+                value={form.customer_id}
+                onChange={(customerId) => setForm({...form, customer_id: customerId})}
+                onContactDetails={setCustomerDetails}
+                contactType="customer"
+                placeholder="Search customers by name or ID..."
+                required={true}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">SO Date *</label>
+              <input 
+                className="input" 
+                type="date" 
+                value={form.so_date} 
+                onChange={(e)=>setForm({...form, so_date:e.target.value})}
+                title="Sales Order Date"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Expected Delivery Date</label>
+              <input 
+                className="input" 
+                type="date" 
+                value={form.delivery_date} 
+                onChange={(e)=>setForm({...form, delivery_date:e.target.value})}
+                title="Expected Delivery Date"
+              />
+            </div>
+            
+            {/* Customer Contact Details Section */}
+            {customerDetails.name && (
+              <div className="md:col-span-3 border-t pt-4 mt-2">
+                <h4 className="text-sm font-medium text-gray-800 mb-3 flex items-center">
+                  Customer Contact Details
+                  <span className="ml-2 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                    {customerDetails.name}
+                  </span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
+                    <input 
+                      className="input bg-gray-50" 
+                      value={customerDetails.email} 
+                      readOnly
+                      placeholder="No email provided"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Phone Number</label>
+                    <input 
+                      className="input bg-gray-50" 
+                      value={customerDetails.mobile} 
+                      readOnly
+                      placeholder="No phone provided"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">GST Number</label>
+                    <input 
+                      className="input bg-gray-50 font-mono text-sm" 
+                      value={customerDetails.gst_number} 
+                      readOnly
+                      placeholder="No GST provided"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Address</label>
+                    <input 
+                      className="input bg-gray-50" 
+                      value={customerDetails.address} 
+                      readOnly
+                      placeholder="No address provided"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          <LineItemsTable items={items} setItems={setItems} />
+          <div className="flex justify-end mt-4 space-x-3">
+            <button className="btn btn-secondary" onClick={()=>setShowForm(false)}>Cancel</button>
+            <button className="btn btn-primary" onClick={()=>createMutation.mutate()}>Save Sales Order</button>
+          </div>
+        </div>
+      )}
+
+      <div className="card p-0 overflow-hidden">
+        <table className="min-w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">SO #</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+              <th className="px-4 py-2"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {(soData?.results || soData || []).map((so) => (
+              <tr key={so.id}>
+                <td className="px-4 py-2">{so.so_number}</td>
+                <td className="px-4 py-2">
+                  {so.customer_name || so.customer?.name || `Customer ID: ${so.customer}`}
+                </td>
+                <td className="px-4 py-2">₹{so.grand_total}</td>
+                <td className="px-4 py-2 text-right space-x-2">
+                  <a href={`/transactions/sales-orders/${so.id}`} className="px-3 py-1 bg-gray-100 rounded-md text-sm">View</a>
+                  <button onClick={() => convertMutation.mutate(so.id)} className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm">Convert to Invoice</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default SalesOrder;
