@@ -159,7 +159,7 @@ const PurchaseOrder = () => {
               </div>
             )}
           </div>
-          <LineItemsTable items={items} setItems={setItems} />
+          <LineItemsTable items={items} setItems={setItems} transactionType="purchase" />
           <div className="flex justify-end mt-4 space-x-3">
             <button className="btn btn-secondary" onClick={()=>setShowForm(false)}>Cancel</button>
             <button className="btn btn-primary" onClick={()=>createMutation.mutate()}>Save Purchase Order</button>

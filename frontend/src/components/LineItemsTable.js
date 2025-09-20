@@ -1,59 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery } from 'react-query';
-import { masterDataAPI } from '../services/api';
+import React from 'react';
+import AsyncProductSelect from './AsyncProductSelect';
 
-const LineItemsTable = ({ items, setItems }) => {
-  const [products, setProducts] = useState([]);
-
-  // Fetch products for dropdown
-  const { data: productsData } = useQuery('products', () => 
-    masterDataAPI.getProducts().then(r => r.data)
-  );
-
-  useEffect(() => {
-    if (productsData) {
-      setProducts(productsData.results || productsData || []);
-    }
-  }, [productsData]);
+const LineItemsTable = ({ items, setItems, transactionType = 'sales' }) => {
+  // transactionType: 'sales' (for SO/Invoice) or 'purchase' (for PO/Bill)
 
   const updateItem = (idx, key, value) => {
     const next = [...items];
     next[idx] = { ...next[idx], [key]: value };
 
-    // Auto-populate product details when product is selected
-    if (key === 'product_id' && value) {
-      const selectedProduct = products.find(p => p.id.toString() === value.toString());
-      if (selectedProduct) {
-        next[idx] = {
-          ...next[idx],
-          product_name: selectedProduct.name,
-          unit_price: selectedProduct.purchase_price || 0,
-          tax_percent: selectedProduct.purchase_tax_percent || 0
-        };
-        
-        // Trigger calculation after product selection
-        const quantity = next[idx].quantity || 0;
-        const unitPrice = selectedProduct.purchase_price || 0;
-        const taxPercent = selectedProduct.purchase_tax_percent || 0;
-
-        const subtotal = quantity * unitPrice;
-        const taxAmount = (subtotal * taxPercent) / 100;
-        const total = subtotal + taxAmount;
-
-        next[idx] = {
-          ...next[idx],
-          product_name: selectedProduct.name,
-          unit_price: unitPrice,
-          tax_percent: taxPercent,
-          subtotal: subtotal,
-          tax_amount: taxAmount,
-          total: total
-        };
-      }
-    }
-
     // Recalculate totals when quantity, unit_price, or tax_percent changes
-    if (['quantity', 'unit_price', 'tax_percent', 'product_id'].includes(key)) {
+    if (['quantity', 'unit_price', 'tax_percent'].includes(key)) {
       const quantity = parseFloat(next[idx].quantity) || 0;
       const unitPrice = parseFloat(next[idx].unit_price) || 0;
       const taxPercent = parseFloat(next[idx].tax_percent) || 0;
@@ -70,6 +26,37 @@ const LineItemsTable = ({ items, setItems }) => {
       };
     }
 
+    setItems(next);
+  };
+
+  // Handle product selection from AsyncProductSelect
+  const handleProductChange = (idx, productId) => {
+    const next = [...items];
+    next[idx] = { ...next[idx], product_id: productId };
+    setItems(next);
+  };
+
+  // Handle product details auto-fill from AsyncProductSelect
+  const handleProductDetails = (idx, productDetails) => {
+    const next = [...items];
+    const quantity = parseFloat(next[idx].quantity) || 0;
+    const unitPrice = parseFloat(productDetails.price) || 0;
+    const taxPercent = parseFloat(productDetails.tax_percent) || 0;
+
+    const subtotal = quantity * unitPrice;
+    const taxAmount = (subtotal * taxPercent) / 100;
+    const total = subtotal + taxAmount;
+
+    next[idx] = {
+      ...next[idx],
+      product_name: productDetails.name,
+      unit_price: unitPrice,
+      tax_percent: taxPercent,
+      subtotal: subtotal,
+      tax_amount: taxAmount,
+      total: total
+    };
+    
     setItems(next);
   };
 
@@ -105,7 +92,7 @@ const LineItemsTable = ({ items, setItems }) => {
 
   return (
     <div className="space-y-4">
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" style={{ minHeight: '200px' }}>
         <table className="table">
           <thead>
             <tr>
@@ -131,19 +118,15 @@ const LineItemsTable = ({ items, setItems }) => {
 
               return (
               <tr key={idx}>
-                <td>
-                  <select 
-                    className="input w-48" 
-                    value={item.product_id} 
-                    onChange={(e) => updateItem(idx, 'product_id', e.target.value)}
-                  >
-                    <option value="">Select Product</option>
-                    {products.map(product => (
-                      <option key={product.id} value={product.id}>
-                        {product.name} (ID: {product.id})
-                      </option>
-                    ))}
-                  </select>
+                <td style={{ width: '250px' }}>
+                  <AsyncProductSelect
+                    value={item.product_id}
+                    onChange={(productId) => handleProductChange(idx, productId)}
+                    onProductDetails={(details) => handleProductDetails(idx, details)}
+                    transactionType={transactionType}
+                    placeholder="Search products..."
+                    required={true}
+                  />
                 </td>
                 <td>
                   <input 
@@ -201,17 +184,17 @@ const LineItemsTable = ({ items, setItems }) => {
         </table>
       </div>
 
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <button 
           type="button" 
-          className="btn btn-secondary" 
+          className="btn btn-secondary flex-shrink-0" 
           onClick={addRow}
         >
           Add Line
         </button>
 
         {/* Grand Total Summary */}
-        <div className="bg-gray-50 p-4 rounded-lg border">
+        <div className="bg-gray-50 p-4 rounded-lg border flex-shrink-0 min-w-[280px]">
           <div className="space-y-2 text-sm">
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Subtotal (Without Tax):</span>
