@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import InvoicingDashboard from './pages/InvoicingDashboard';
 import ContactMaster from './pages/master-data/ContactMaster';
 import ProductMaster from './pages/master-data/ProductMaster';
 import TaxMaster from './pages/master-data/TaxMaster';
@@ -21,6 +22,9 @@ import ProfitLoss from './pages/reports/ProfitLoss';
 import StockReport from './pages/reports/StockReport';
 import PartnerLedger from './pages/reports/PartnerLedger';
 import ContactDashboard from './pages/ContactDashboard';
+import UserManagement from './pages/admin/UserManagement';
+import Profile from './pages/Profile';
+import InvoiceDetail from './pages/transactions/InvoiceDetail';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -74,6 +78,8 @@ function App() {
               }>
                 {/* Admin and Invoicing User Routes */}
                 <Route path="dashboard" element={<Dashboard />} />
+                <Route path="invoicing-dashboard" element={<InvoicingDashboard />} />
+                <Route path="profile" element={<Profile />} />
                 
                 {/* Master Data Routes */}
                 <Route path="master-data/contacts" element={<ContactMaster />} />
@@ -86,6 +92,7 @@ function App() {
                 <Route path="transactions/vendor-bills" element={<VendorBill />} />
                 <Route path="transactions/sales-orders" element={<SalesOrder />} />
                 <Route path="transactions/customer-invoices" element={<CustomerInvoice />} />
+                <Route path="transactions/customer-invoices/:id" element={<InvoiceDetail />} />
                 <Route path="transactions/payments" element={<Payments />} />
                 
                 {/* Report Routes */}
@@ -96,6 +103,9 @@ function App() {
                 
                 {/* Contact User Routes */}
                 <Route path="contact-dashboard" element={<ContactDashboard />} />
+                
+                {/* Admin Routes */}
+                <Route path="admin/users" element={<UserManagement />} />
                 
                 {/* Default redirect */}
                 <Route index element={<Navigate to="/dashboard" replace />} />

@@ -176,29 +176,33 @@ The system implements comprehensive role-based access control with three distinc
 ### Working Modules & Functionalities
 - Master Data
   - Contact Master: CRUD customers/vendors
-  - Product Master: CRUD products/services with pricing and taxes
-  - Tax Master: Manage GST/tax rates
-  - Chart of Accounts: Define ledger accounts
+  - Product Master: CRUD products/services with pricing and taxes (HSN, category)
+  - Tax Master: CRUD taxes (percentage/fixed, applicable on sales/purchase/both)
+  - Chart of Accounts: CRUD ledger accounts (types: asset/liability/income/expense/equity)
 - Transactions
-  - Purchase Orders → Vendor Bills (AP)
-  - Sales Orders → Customer Invoices (AR)
-  - Payments: Record customer/vendor payments
+  - Purchase Orders → Convert to Vendor Bills (AP) [POST /api/transactions/purchase-orders/:id/convert-to-bill/]
+  - Sales Orders → Convert to Customer Invoices (AR) [POST /api/transactions/sales-orders/:id/convert-to-invoice/]
+  - Payments: Record/allocate payments; Quick Allocate API for invoice/bill settlement
 - Reports
   - Balance Sheet, Profit & Loss
   - Stock Report, Partner Ledger
 - Dashboard
-  - Role‑based metrics and quick stats for admin/invoicing users and contact users
+  - Invoicing Dashboard (invoicing users): KPIs, pending lists with Quick Pay
+  - Contact Dashboard (contact users): Own invoices/bills overview
 
 ### Backend API (high‑level)
 Mounted under `/api/` (see `backend/shiv_accounts/urls.py`).
 - Auth (`/api/auth/`): register, login, logout, profile, update profile, change password, dashboard data
 - Master Data (`/api/master-data/`): contacts, products, taxes, chart of accounts (CRUD)
-- Transactions (`/api/transactions/`): purchase orders, vendor bills, sales orders, customer invoices, payments; contact‑scoped endpoints
+- Transactions (`/api/transactions/`): purchase orders, vendor bills, sales orders, customer invoices, payments; contact‑scoped endpoints; conversions and quick payments
+  - `POST /api/transactions/sales-orders/:id/convert-to-invoice/`
+  - `POST /api/transactions/purchase-orders/:id/convert-to-bill/`
+  - `POST /api/transactions/payments/quick-allocate/` { target_type: 'invoice'|'bill', target_id, amount, payment_method }
 - Reports (`/api/reports/`): balance sheet, profit & loss, stock, partner ledger, dashboard summary
 
 ### Frontend Routes (primary)
 - Public: `/login` (login + sign‑up toggle)
-- Protected: `/dashboard`, `/master-data/*`, `/transactions/*`, `/reports/*`
+- Protected: `/dashboard`, `/invoicing-dashboard`, `/contact-dashboard`, `/profile`, `/master-data/*`, `/transactions/*`, `/reports/*`, `/admin/users`
 - Route protection via `components/ProtectedRoute` and `AuthContext`
 
 ### Forms, Validation, UX
@@ -356,3 +360,84 @@ The system includes pre-configured sample data:
 - **AP/AR**: Accounts Payable/Receivable
 - **RBAC**: Role-Based Access Control
 - **Django Admin**: Built-in Django administration interface for database management
+
+### Appendix: Business Requirements (Provided Spec)
+
+#### 1) Overview
+- Cloud-based accounting system for Shiv Furniture to:
+  - Maintain core master data: Contacts, Products, Taxes, Chart of Accounts (CoA)
+  - Record sales, purchases, and payments using master data
+  - Generate reports: Balance Sheet, Profit & Loss (P&L), Stock Statement
+
+#### 2) Primary Actors
+- **Admin (Business Owner)**: Create/modify/archive master data, record transactions, view reports
+- **Invoicing User (Accountant)**: Create master data, record transactions, view reports
+- **Contact (Customer/Vendor)**: Created via Contact Master; can view their own invoices/bills and make payments
+- **System**: Validates data, computes taxes, updates ledgers, generates reports
+
+#### 3) Master Data Modules
+- **Contact Master**
+  - Fields: Name, Type (Customer/Vendor/Both), Email, Mobile, Address (City, State, Pincode), Profile Image
+  - Examples: Vendor: Azure Furniture; Customer: Nimesh Pathak
+- **Product Master**
+  - Fields: Product Name, Type (Goods/Service), Sales Price, Purchase Price, Sale Tax %, Purchase Tax %, HSN Code, Category
+  - Examples: Office Chair, Wooden Table, Sofa, Dining Table
+- **Tax Master**
+  - Fields: Tax Name, Computation Method (Percentage/Fixed Value), Applicable on Sales/Purchase
+  - Examples: GST 5%, GST 10%
+- **Chart of Accounts (CoA)**
+  - Concept: Master list of ledger accounts (Assets, Liabilities, Income, Expenses, Equity) to classify every transaction
+  - Fields: Account Name, Type (Asset, Liability, Expense, Income, Equity)
+  - Examples:
+    - Assets: Cash, Bank, Debtors
+    - Liabilities: Creditors
+    - Income: Sales Income
+    - Expenses: Purchase Expense
+
+#### 4) Transaction Flow (using master data)
+- **Purchase Order (PO)**: Select Vendor, Product, Quantity, Unit Price, Tax (5%/10%)
+- **Vendor Bill**: Convert PO to Bill; record invoice date, due date; register payment (Cash/Bank)
+- **Sales Order (SO)**: Select Customer, Product, Quantity, Unit Price, Tax
+- **Customer Invoice**: Generate from SO; set tax; receive payment via Cash/Bank
+- **Payment**: Register against bill/invoice; select bank or cash
+
+#### 5) Reporting Requirements
+- **Balance Sheet**: Real-time snapshot of Assets, Liabilities, Equity
+- **Profit & Loss**: Income from sales minus purchases/expenses → net profit
+- **Stock Report**: Current quantity, valuation, movement (e.g., Office Chair stock level)
+
+#### 6) Key Use-Case Steps
+- 6.1 Create Master Data
+  1) Create Users
+  2) Add Contacts (e.g., Azure Furniture, Nimesh Pathak)
+  3) Add Products (e.g., Wooden Chair with 5% sales tax)
+  4) Define Tax rates (5%, 10%)
+  5) Set up Chart of Accounts
+- 6.2 Record Purchase
+  1) Create PO for Azure Furniture
+  2) Convert PO to Vendor Bill upon receipt
+  3) Record payment via Bank
+- 6.3 Record Sale
+  1) Create SO for Nimesh Pathak (e.g., 5 Office Chairs)
+  2) Generate Customer Invoice
+  3) Record payment via Cash/Bank
+- 6.4 Generate Reports
+  1) Select period
+  2) System compiles: Balance Sheet, P&L, Stock report (Purchased +, Sales −, Available)
+
+#### Key Concepts (Quick Reference)
+- **Chart of Accounts (CoA)**: Structured list of ledger accounts (Cash, Bank, AR, Sales Revenue, Purchases, etc.)
+- **Profit & Loss (P&L)**: Income statement over a period
+- **Sales Order (SO)**: Confirms customer order before delivery/invoicing
+- **Purchase Order (PO)**: Official request to vendor to supply goods/services
+- **Vendor Bill**: Purchase invoice received (AP tracking)
+- **HSN**: Goods classification code for tax/rates standardization
+- **Balance Sheet**: Assets = Liabilities + Equity snapshot at a date
+- **Partner Ledger**: Per customer/vendor transaction history (invoices, payments, credit notes)
+
+#### API Documentation
+- Link: https://drive.google.com/file/d/1zeyV15pIQekxdDXn3p9pmssCvaQUMEBe/view?usp=sharing
+
+#### Why this Hackathon Problem is Important
+- Learn real-world ERP workflows and module interactions (e.g., Sales → Inventory)
+- Practice translating business logic into working software

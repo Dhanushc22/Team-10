@@ -16,7 +16,12 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate(from, { replace: true });
+      // Redirect based on role
+      const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+      const role = storedUser?.role;
+      if (role === 'contact') navigate('/contact-dashboard', { replace: true });
+      else if (role === 'invoicing_user') navigate('/invoicing-dashboard', { replace: true });
+      else navigate(from, { replace: true });
     }
   }, [isAuthenticated, navigate, from]);
 
@@ -31,12 +36,20 @@ const Login = () => {
     if (isLogin) {
       const result = await login(data.email, data.password);
       if (result.success) {
-        navigate(from, { replace: true });
+        localStorage.setItem('user', JSON.stringify(result.user));
+        const role = result.user?.role;
+        if (role === 'contact') navigate('/contact-dashboard', { replace: true });
+        else if (role === 'invoicing_user') navigate('/invoicing-dashboard', { replace: true });
+        else navigate(from, { replace: true });
       }
     } else {
       const result = await register(data);
       if (result.success) {
-        navigate(from, { replace: true });
+        localStorage.setItem('user', JSON.stringify(result.user));
+        const role = result.user?.role;
+        if (role === 'contact') navigate('/contact-dashboard', { replace: true });
+        else if (role === 'invoicing_user') navigate('/invoicing-dashboard', { replace: true });
+        else navigate(from, { replace: true });
       }
     }
   };

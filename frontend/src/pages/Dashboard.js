@@ -10,13 +10,13 @@ import {
   AlertTriangle,
   CheckCircle
 } from 'lucide-react';
-import { reportsAPI } from '../services/api';
+import { authAPI } from '../services/api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 const Dashboard = () => {
   const { data: dashboardData, isLoading, error } = useQuery(
-    'dashboard-summary',
-    reportsAPI.getDashboardSummary,
+    'auth-dashboard-data',
+    authAPI.getDashboardData,
     {
       refetchInterval: 30000, // Refetch every 30 seconds
     }
