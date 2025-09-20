@@ -29,7 +29,7 @@ venv/
 *.egg-info/
 .python-version
 
-
+db.sqlite3
 
 # Django static/media outputs
 backend/staticfiles/
