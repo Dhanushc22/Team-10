@@ -21,39 +21,7 @@ const PurchaseOrder = () => {
   const today = new Date().toISOString().split('T')[0];
   const [form, setForm] = useState({ vendor_id: '', po_date: today, delivery_date: '' });
   const [items, setItems] = useState([{ product_id: '', quantity: 1, unit_price: 0, tax_percent: 0 }]);
-  const [vendorDetails, setVendorDetails] = useState({ email: '', mobile: '', address: '', gst_number: '' });
-  const [fetchingVendor, setFetchingVendor] = useState(false);
-
-  // Fetch vendor details when vendor_id changes
-  useEffect(() => {
-    const fetchVendorDetails = async () => {
-      if (form.vendor_id && form.vendor_id.trim()) {
-        setFetchingVendor(true);
-        try {
-          const response = await masterDataAPI.getContact(form.vendor_id);
-          const vendor = response.data;
-          setVendorDetails({
-            email: vendor.email || '',
-            mobile: vendor.mobile || '',
-            address: vendor.address || '',
-            gst_number: vendor.gst_number || ''
-          });
-        } catch (error) {
-          console.error('Error fetching vendor details:', error);
-          setVendorDetails({ email: '', mobile: '', address: '', gst_number: '' });
-          if (error.response?.status === 404) {
-            toast.error('Vendor not found');
-          }
-        } finally {
-          setFetchingVendor(false);
-        }
-      } else {
-        setVendorDetails({ email: '', mobile: '', address: '', gst_number: '' });
-      }
-    };
-
-    fetchVendorDetails();
-  }, [form.vendor_id]);
+  const [vendorDetails, setVendorDetails] = useState({ name: '', email: '', mobile: '', address: '', gst_number: '' });
 
   const createMutation = useMutation(() => {
     // Client-side validation
