@@ -541,6 +541,7 @@ def update_sales_order_with_items(request, pk):
 @permission_classes([permissions.IsAuthenticated])
 def create_purchase_order_with_items(request):
     """Create Purchase Order with line items and computed totals."""
+    print(f"DEBUG PO: User: {request.user}, Role: {request.user.role}, is_admin: {request.user.is_admin()}, is_invoicing: {request.user.is_invoicing_user()}")
     if not (request.user.is_admin() or request.user.is_invoicing_user()):
         return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
 

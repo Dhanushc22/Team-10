@@ -20,9 +20,34 @@ const SalesOrder = () => {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ customer_id: '', so_date: '', delivery_date: '', payment_terms: '', notes: '' });
   const [items, setItems] = useState([{ product_id: '', quantity: 1, unit_price: 0, tax_percent: 0 }]);
-  const createMutation = useMutation(() => transactionsAPI.createSalesOrderWithItems({ ...form, items }), {
-    onSuccess: () => { toast.success('Sales Order created'); setShowForm(false); setItems([{ product_id:'', quantity:1, unit_price:0, tax_percent:0 }]); setForm({ customer_id:'', so_date:'', delivery_date:'', payment_terms:'', notes:'' }); queryClient.invalidateQueries('sales-orders'); },
-    onError: () => toast.error('Failed to create sales order')
+  const createMutation = useMutation(() => {
+    // Client-side validation
+    if (!form.customer_id) {
+      throw new Error('Customer ID is required');
+    }
+    if (!items.length || items.some(item => !item.product_id || !item.quantity || !item.unit_price)) {
+      throw new Error('At least one complete line item is required (product, quantity, unit price)');
+    }
+    
+    const payload = {
+      ...form,
+      items: items.filter(item => item.product_id) // Only send complete items
+    };
+    
+    console.log('SO Payload:', payload); // Debug log
+    return transactionsAPI.createSalesOrderWithItems(payload);
+  }, {
+    onSuccess: () => { 
+      toast.success('Sales Order created'); 
+      setShowForm(false); 
+      setItems([{ product_id:'', quantity:1, unit_price:0, tax_percent:0 }]); 
+      setForm({ customer_id:'', so_date:'', delivery_date:'', payment_terms:'', notes:'' }); 
+      queryClient.invalidateQueries('sales-orders'); 
+    },
+    onError: (error) => {
+      console.error('SO Creation Error:', error);
+      toast.error(error?.response?.data?.error || error?.message || 'Failed to create sales order');
+    }
   });
 
   return (

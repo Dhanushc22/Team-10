@@ -18,9 +18,34 @@ const PurchaseOrder = () => {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ vendor_id: '', po_date: '', delivery_date: '', payment_terms: '', notes: '' });
   const [items, setItems] = useState([{ product_id: '', quantity: 1, unit_price: 0, tax_percent: 0 }]);
-  const createMutation = useMutation(() => transactionsAPI.createPurchaseOrderWithItems({ ...form, items }), {
-    onSuccess: () => { toast.success('Purchase Order created'); setShowForm(false); setItems([{ product_id:'', quantity:1, unit_price:0, tax_percent:0 }]); setForm({ vendor_id:'', po_date:'', delivery_date:'', payment_terms:'', notes:'' }); queryClient.invalidateQueries('purchase-orders'); },
-    onError: () => toast.error('Failed to create purchase order')
+  const createMutation = useMutation(() => {
+    // Client-side validation
+    if (!form.vendor_id) {
+      throw new Error('Vendor ID is required');
+    }
+    if (!items.length || items.some(item => !item.product_id || !item.quantity || !item.unit_price)) {
+      throw new Error('At least one complete line item is required (product, quantity, unit price)');
+    }
+    
+    const payload = {
+      ...form,
+      items: items.filter(item => item.product_id) // Only send complete items
+    };
+    
+    console.log('PO Payload:', payload); // Debug log
+    return transactionsAPI.createPurchaseOrderWithItems(payload);
+  }, {
+    onSuccess: () => { 
+      toast.success('Purchase Order created'); 
+      setShowForm(false); 
+      setItems([{ product_id:'', quantity:1, unit_price:0, tax_percent:0 }]); 
+      setForm({ vendor_id:'', po_date:'', delivery_date:'', payment_terms:'', notes:'' }); 
+      queryClient.invalidateQueries('purchase-orders'); 
+    },
+    onError: (error) => {
+      console.error('PO Creation Error:', error);
+      toast.error(error?.response?.data?.error || error?.message || 'Failed to create purchase order');
+    }
   });
 
   return (
