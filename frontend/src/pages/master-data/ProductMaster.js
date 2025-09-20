@@ -164,6 +164,7 @@ const ProductMaster = () => {
               <table className="table">
                 <thead>
                   <tr>
+                    <th>ID</th>
                     <th>Name</th>
                     <th>Type</th>
                     <th>Sales Price</th>
@@ -176,12 +177,17 @@ const ProductMaster = () => {
                 </thead>
                 <tbody>
                   {isLoading ? (
-                    <tr><td colSpan="8" className="text-center py-8">Loading...</td></tr>
+                    <tr><td colSpan="9" className="text-center py-8">Loading...</td></tr>
                   ) : items.length === 0 ? (
-                    <tr><td colSpan="8" className="text-center py-8 text-gray-500">No products found</td></tr>
+                    <tr><td colSpan="9" className="text-center py-8 text-gray-500">No products found</td></tr>
                   ) : (
                     items.map((item) => (
                       <tr key={item.id} className="hover:bg-gray-50">
+                        <td>
+                          <span className="font-mono text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                            {item.id}
+                          </span>
+                        </td>
                         <td className="font-medium">{item.name}</td>
                         <td className="capitalize">{item.type}</td>
                         <td>₹{item.sales_price}</td>

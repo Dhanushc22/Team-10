@@ -348,6 +348,7 @@ const ContactMaster = () => {
               <table className="table">
                 <thead>
                   <tr>
+                    <th>ID</th>
                     <th>Name</th>
                     <th>Type</th>
                     <th>Email</th>
@@ -359,19 +360,24 @@ const ContactMaster = () => {
                 <tbody>
                   {isLoading ? (
                     <tr>
-                      <td colSpan="6" className="text-center py-8">
+                      <td colSpan="7" className="text-center py-8">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
                       </td>
                     </tr>
                   ) : contacts.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="text-center py-8 text-gray-500">
+                      <td colSpan="7" className="text-center py-8 text-gray-500">
                         No contacts found
                       </td>
                     </tr>
                   ) : (
                     contacts.map((contact) => (
                       <tr key={contact.id} className="hover:bg-gray-50">
+                        <td>
+                          <span className="font-mono text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                            {contact.id}
+                          </span>
+                        </td>
                         <td>
                           <div className="flex items-center">
                             <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mr-3">

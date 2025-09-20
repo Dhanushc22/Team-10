@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
+import { setQueryClient } from './services/enhancedAPI';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -36,6 +37,11 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  // Set up global query client for real-time cache invalidation
+  useEffect(() => {
+    setQueryClient(queryClient);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
