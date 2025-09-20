@@ -24,10 +24,10 @@ const CustomerInvoice = () => {
   });
 
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ customer_id: '', invoice_date: '', due_date: '', payment_terms: '', reference: '', notes: '' });
+  const [form, setForm] = useState({ customer_id: '', invoice_date: '', due_date: '', reference: '' });
   const [items, setItems] = useState([{ product_id: '', quantity: 1, unit_price: 0, tax_percent: 0 }]);
   const createMutation = useMutation(() => transactionsAPI.createCustomerInvoiceWithItems({ ...form, items }), {
-    onSuccess: () => { toast.success('Invoice created'); setShowForm(false); setItems([{ product_id:'', quantity:1, unit_price:0, tax_percent:0 }]); setForm({ customer_id:'', invoice_date:'', due_date:'', payment_terms:'', reference:'', notes:'' }); queryClient.invalidateQueries('customer-invoices'); },
+    onSuccess: () => { toast.success('Invoice created'); setShowForm(false); setItems([{ product_id:'', quantity:1, unit_price:0, tax_percent:0 }]); setForm({ customer_id:'', invoice_date:'', due_date:'', reference:'' }); queryClient.invalidateQueries('customer-invoices'); },
     onError: (e) => {
       const msg = e?.response?.data?.error || e?.response?.data?.message || 'Failed to create invoice';
       toast.error(msg);

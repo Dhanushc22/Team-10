@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { transactionsAPI } from '../../services/api';
 import { toast } from 'react-hot-toast';
-import { useState } from 'react';
 import LineItemsTable from '../../components/LineItemsTable';
 
 const VendorBill = () => {
@@ -17,10 +16,10 @@ const VendorBill = () => {
   });
 
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ vendor_id: '', bill_date: '', due_date: '', payment_terms: '', purchase_order_id: '', notes: '' });
+  const [form, setForm] = useState({ vendor_id: '', bill_date: '', due_date: '', purchase_order_id: '' });
   const [items, setItems] = useState([{ product_id: '', quantity: 1, unit_price: 0, tax_percent: 0 }]);
   const createMutation = useMutation(() => transactionsAPI.createVendorBillWithItems({ ...form, items }), {
-    onSuccess: () => { toast.success('Vendor Bill created'); setShowForm(false); setItems([{ product_id:'', quantity:1, unit_price:0, tax_percent:0 }]); setForm({ vendor_id:'', bill_date:'', due_date:'', payment_terms:'', purchase_order_id:'', notes:'' }); queryClient.invalidateQueries('vendor-bills'); },
+    onSuccess: () => { toast.success('Vendor Bill created'); setShowForm(false); setItems([{ product_id:'', quantity:1, unit_price:0, tax_percent:0 }]); setForm({ vendor_id:'', bill_date:'', due_date:'', purchase_order_id:'' }); queryClient.invalidateQueries('vendor-bills'); },
     onError: () => toast.error('Failed to create vendor bill')
   });
 
@@ -41,9 +40,7 @@ const VendorBill = () => {
             <input className="input" placeholder="Vendor ID" value={form.vendor_id} onChange={(e)=>setForm({...form, vendor_id:e.target.value})} />
             <input className="input" type="date" value={form.bill_date} onChange={(e)=>setForm({...form, bill_date:e.target.value})} />
             <input className="input" type="date" value={form.due_date} onChange={(e)=>setForm({...form, due_date:e.target.value})} />
-            <input className="input md:col-span-3" placeholder="Payment terms" value={form.payment_terms} onChange={(e)=>setForm({...form, payment_terms:e.target.value})} />
             <input className="input md:col-span-3" placeholder="Purchase Order ID (optional)" value={form.purchase_order_id} onChange={(e)=>setForm({...form, purchase_order_id:e.target.value})} />
-            <input className="input md:col-span-3" placeholder="Notes" value={form.notes} onChange={(e)=>setForm({...form, notes:e.target.value})} />
           </div>
           <LineItemsTable items={items} setItems={setItems} />
           <div className="flex justify-end mt-4 space-x-3">

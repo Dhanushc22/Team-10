@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { transactionsAPI } from '../../services/api';
+import { transactionsAPI, masterDataAPI } from '../../services/api';
 import { toast } from 'react-hot-toast';
 import LineItemsTable from '../../components/LineItemsTable';
 
@@ -16,8 +16,44 @@ const PurchaseOrder = () => {
   });
 
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ vendor_id: '', po_date: '', delivery_date: '', payment_terms: '', notes: '' });
+  // Set today's date as default for PO date
+  const today = new Date().toISOString().split('T')[0];
+  const [form, setForm] = useState({ vendor_id: '', po_date: today, delivery_date: '' });
   const [items, setItems] = useState([{ product_id: '', quantity: 1, unit_price: 0, tax_percent: 0 }]);
+  const [vendorDetails, setVendorDetails] = useState({ email: '', mobile: '', address: '', gst_number: '' });
+  const [fetchingVendor, setFetchingVendor] = useState(false);
+
+  // Fetch vendor details when vendor_id changes
+  useEffect(() => {
+    const fetchVendorDetails = async () => {
+      if (form.vendor_id && form.vendor_id.trim()) {
+        setFetchingVendor(true);
+        try {
+          const response = await masterDataAPI.getContact(form.vendor_id);
+          const vendor = response.data;
+          setVendorDetails({
+            email: vendor.email || '',
+            mobile: vendor.mobile || '',
+            address: vendor.address || '',
+            gst_number: vendor.gst_number || ''
+          });
+        } catch (error) {
+          console.error('Error fetching vendor details:', error);
+          setVendorDetails({ email: '', mobile: '', address: '', gst_number: '' });
+          if (error.response?.status === 404) {
+            toast.error('Vendor not found');
+          }
+        } finally {
+          setFetchingVendor(false);
+        }
+      } else {
+        setVendorDetails({ email: '', mobile: '', address: '', gst_number: '' });
+      }
+    };
+
+    fetchVendorDetails();
+  }, [form.vendor_id]);
+
   const createMutation = useMutation(() => {
     // Client-side validation
     if (!form.vendor_id) {
@@ -39,7 +75,8 @@ const PurchaseOrder = () => {
       toast.success('Purchase Order created'); 
       setShowForm(false); 
       setItems([{ product_id:'', quantity:1, unit_price:0, tax_percent:0 }]); 
-      setForm({ vendor_id:'', po_date:'', delivery_date:'', payment_terms:'', notes:'' }); 
+      setForm({ vendor_id:'', po_date:today, delivery_date:'' });
+      setVendorDetails({ email: '', mobile: '', address: '', gst_number: '' }); 
       queryClient.invalidateQueries('purchase-orders'); 
     },
     onError: (error) => {
@@ -62,11 +99,81 @@ const PurchaseOrder = () => {
         <div className="card p-6">
           <h3 className="text-lg font-semibold mb-4">New Purchase Order</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <input className="input" placeholder="Vendor ID" value={form.vendor_id} onChange={(e)=>setForm({...form, vendor_id:e.target.value})} />
-            <input className="input" type="date" value={form.po_date} onChange={(e)=>setForm({...form, po_date:e.target.value})} />
-            <input className="input" type="date" value={form.delivery_date} onChange={(e)=>setForm({...form, delivery_date:e.target.value})} />
-            <input className="input md:col-span-3" placeholder="Payment terms" value={form.payment_terms} onChange={(e)=>setForm({...form, payment_terms:e.target.value})} />
-            <input className="input md:col-span-3" placeholder="Notes" value={form.notes} onChange={(e)=>setForm({...form, notes:e.target.value})} />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Vendor ID *</label>
+              <input 
+                className="input" 
+                placeholder="Enter Vendor ID (e.g., 2)" 
+                value={form.vendor_id} 
+                onChange={(e)=>setForm({...form, vendor_id:e.target.value})} 
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">PO Date *</label>
+              <input 
+                className="input" 
+                type="date" 
+                value={form.po_date} 
+                onChange={(e)=>setForm({...form, po_date:e.target.value})}
+                title="Purchase Order Date"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Expected Delivery Date</label>
+              <input 
+                className="input" 
+                type="date" 
+                value={form.delivery_date} 
+                onChange={(e)=>setForm({...form, delivery_date:e.target.value})}
+                title="Expected Delivery Date"
+              />
+            </div>
+            
+            {/* Vendor Contact Details Section */}
+            <div className="md:col-span-3 border-t pt-4 mt-2">
+              <h4 className="text-sm font-medium text-gray-800 mb-3 flex items-center">
+                Vendor Contact Details 
+                {fetchingVendor && <span className="ml-2 text-xs text-blue-600">(Loading...)</span>}
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
+                  <input 
+                    className="input bg-gray-50" 
+                    value={vendorDetails.email} 
+                    readOnly
+                    placeholder={form.vendor_id ? "Enter valid Vendor ID" : "Auto-filled when Vendor ID is entered"}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Phone Number</label>
+                  <input 
+                    className="input bg-gray-50" 
+                    value={vendorDetails.mobile} 
+                    readOnly
+                    placeholder={form.vendor_id ? "Enter valid Vendor ID" : "Auto-filled when Vendor ID is entered"}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">GST Number</label>
+                  <input 
+                    className="input bg-gray-50 font-mono text-sm" 
+                    value={vendorDetails.gst_number} 
+                    readOnly
+                    placeholder={form.vendor_id ? "Enter valid Vendor ID" : "Auto-filled when Vendor ID is entered"}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Address</label>
+                  <input 
+                    className="input bg-gray-50" 
+                    value={vendorDetails.address} 
+                    readOnly
+                    placeholder={form.vendor_id ? "Enter valid Vendor ID" : "Auto-filled when Vendor ID is entered"}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
           <LineItemsTable items={items} setItems={setItems} />
           <div className="flex justify-end mt-4 space-x-3">

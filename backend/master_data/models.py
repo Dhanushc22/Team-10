@@ -20,6 +20,7 @@ class Contact(models.Model):
     city = models.CharField(max_length=100, blank=True, null=True)
     state = models.CharField(max_length=100, blank=True, null=True)
     pincode = models.CharField(max_length=10, blank=True, null=True)
+    gst_number = models.CharField(max_length=15, blank=True, null=True, help_text="GST Number (e.g., 22AAAAA0000A1Z5)")
     profile_image = models.ImageField(upload_to='contact_images/', blank=True, null=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True, null=True, related_name='contact_profile')
     is_active = models.BooleanField(default=True)

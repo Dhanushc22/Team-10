@@ -465,12 +465,10 @@ def create_sales_order_with_items(request):
             so_date=payload.get('so_date') or timezone.now().date(),
             customer=customer,
             delivery_date=payload.get('delivery_date'),
-            payment_terms=payload.get('payment_terms'),
             status=payload.get('status', 'draft'),
             subtotal=subtotal,
             tax_total=tax_total,
             grand_total=grand_total,
-            notes=payload.get('notes'),
             created_by=request.user,
         )
         for it in items:
@@ -510,9 +508,7 @@ def update_sales_order_with_items(request, pk):
             so.customer = get_object_or_404(Contact, pk=payload['customer_id'])
         so.so_date = payload.get('so_date') or so.so_date
         so.delivery_date = payload.get('delivery_date')
-        so.payment_terms = payload.get('payment_terms')
         so.status = payload.get('status', so.status)
-        so.notes = payload.get('notes')
         subtotal, tax_total, grand_total = _calc_totals_from_items(items)
         so.subtotal, so.tax_total, so.grand_total = subtotal, tax_total, grand_total
         so.save()
@@ -559,12 +555,10 @@ def create_purchase_order_with_items(request):
             po_date=payload.get('po_date') or timezone.now().date(),
             vendor=vendor,
             delivery_date=payload.get('delivery_date'),
-            payment_terms=payload.get('payment_terms'),
             status=payload.get('status', 'draft'),
             subtotal=subtotal,
             tax_total=tax_total,
             grand_total=grand_total,
-            notes=payload.get('notes'),
             created_by=request.user,
         )
         for it in items:
@@ -604,9 +598,7 @@ def update_purchase_order_with_items(request, pk):
             po.vendor = get_object_or_404(Contact, pk=payload['vendor_id'])
         po.po_date = payload.get('po_date') or po.po_date
         po.delivery_date = payload.get('delivery_date')
-        po.payment_terms = payload.get('payment_terms')
         po.status = payload.get('status', po.status)
-        po.notes = payload.get('notes')
         subtotal, tax_total, grand_total = _calc_totals_from_items(items)
         po.subtotal, po.tax_total, po.grand_total = subtotal, tax_total, grand_total
         po.save()
@@ -650,7 +642,6 @@ def create_customer_invoice_with_items(request):
             customer=customer,
             invoice_date=payload.get('invoice_date') or timezone.now().date(),
             due_date=payload.get('due_date') or timezone.now().date(),
-            payment_terms=payload.get('payment_terms'),
             reference=payload.get('reference'),
             sales_order_id=payload.get('sales_order_id'),
             status=payload.get('status', 'pending'),
@@ -658,7 +649,6 @@ def create_customer_invoice_with_items(request):
             tax_total=tax_total,
             grand_total=grand_total,
             created_by=request.user,
-            notes=payload.get('notes'),
         )
         for it in items:
             product = get_object_or_404(Product, pk=it.get('product_id'))
@@ -694,10 +684,8 @@ def update_customer_invoice_with_items(request, pk):
             inv.customer = get_object_or_404(Contact, pk=payload['customer_id'])
         inv.invoice_date = payload.get('invoice_date') or inv.invoice_date
         inv.due_date = payload.get('due_date') or inv.due_date
-        inv.payment_terms = payload.get('payment_terms')
         inv.reference = payload.get('reference', inv.reference)
         inv.status = payload.get('status', inv.status)
-        inv.notes = payload.get('notes')
         subtotal, tax_total, grand_total = _calc_totals_from_items(items)
         inv.subtotal, inv.tax_total, inv.grand_total = subtotal, tax_total, grand_total
         inv.save()
@@ -738,14 +726,12 @@ def create_vendor_bill_with_items(request):
             vendor=vendor,
             bill_date=payload.get('bill_date') or timezone.now().date(),
             due_date=payload.get('due_date') or timezone.now().date(),
-            payment_terms=payload.get('payment_terms'),
             purchase_order_id=payload.get('purchase_order_id'),
             status=payload.get('status', 'pending'),
             subtotal=subtotal,
             tax_total=tax_total,
             grand_total=grand_total,
             created_by=request.user,
-            notes=payload.get('notes'),
         )
         for it in items:
             product = get_object_or_404(Product, pk=it.get('product_id'))
@@ -781,10 +767,8 @@ def update_vendor_bill_with_items(request, pk):
             bill.vendor = get_object_or_404(Contact, pk=payload['vendor_id'])
         bill.bill_date = payload.get('bill_date') or bill.bill_date
         bill.due_date = payload.get('due_date') or bill.due_date
-        bill.payment_terms = payload.get('payment_terms')
         bill.purchase_order_id = payload.get('purchase_order_id', bill.purchase_order_id)
         bill.status = payload.get('status', bill.status)
-        bill.notes = payload.get('notes')
         subtotal, tax_total, grand_total = _calc_totals_from_items(items)
         bill.subtotal, bill.tax_total, bill.grand_total = subtotal, tax_total, grand_total
         bill.save()

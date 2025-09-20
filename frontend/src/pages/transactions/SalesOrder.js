@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { transactionsAPI } from '../../services/api';
+import { transactionsAPI, masterDataAPI } from '../../services/api';
 import { toast } from 'react-hot-toast';
-import { useState } from 'react';
 import LineItemsTable from '../../components/LineItemsTable';
 
 const SalesOrder = () => {
@@ -18,8 +17,44 @@ const SalesOrder = () => {
 
   // Create SO with items
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ customer_id: '', so_date: '', delivery_date: '', payment_terms: '', notes: '' });
+  // Set today's date as default for SO date
+  const today = new Date().toISOString().split('T')[0];
+  const [form, setForm] = useState({ customer_id: '', so_date: today, delivery_date: '' });
   const [items, setItems] = useState([{ product_id: '', quantity: 1, unit_price: 0, tax_percent: 0 }]);
+  const [customerDetails, setCustomerDetails] = useState({ email: '', mobile: '', address: '', gst_number: '' });
+  const [fetchingCustomer, setFetchingCustomer] = useState(false);
+
+  // Fetch customer details when customer_id changes
+  useEffect(() => {
+    const fetchCustomerDetails = async () => {
+      if (form.customer_id && form.customer_id.trim()) {
+        setFetchingCustomer(true);
+        try {
+          const response = await masterDataAPI.getContact(form.customer_id);
+          const customer = response.data;
+          setCustomerDetails({
+            email: customer.email || '',
+            mobile: customer.mobile || '',
+            address: customer.address || '',
+            gst_number: customer.gst_number || ''
+          });
+        } catch (error) {
+          console.error('Error fetching customer details:', error);
+          setCustomerDetails({ email: '', mobile: '', address: '', gst_number: '' });
+          if (error.response?.status === 404) {
+            toast.error('Customer not found');
+          }
+        } finally {
+          setFetchingCustomer(false);
+        }
+      } else {
+        setCustomerDetails({ email: '', mobile: '', address: '', gst_number: '' });
+      }
+    };
+
+    fetchCustomerDetails();
+  }, [form.customer_id]);
+
   const createMutation = useMutation(() => {
     // Client-side validation
     if (!form.customer_id) {
@@ -41,7 +76,8 @@ const SalesOrder = () => {
       toast.success('Sales Order created'); 
       setShowForm(false); 
       setItems([{ product_id:'', quantity:1, unit_price:0, tax_percent:0 }]); 
-      setForm({ customer_id:'', so_date:'', delivery_date:'', payment_terms:'', notes:'' }); 
+      setForm({ customer_id:'', so_date:today, delivery_date:'' });
+      setCustomerDetails({ email: '', mobile: '', address: '', gst_number: '' }); 
       queryClient.invalidateQueries('sales-orders'); 
     },
     onError: (error) => {
@@ -64,11 +100,81 @@ const SalesOrder = () => {
         <div className="card p-6">
           <h3 className="text-lg font-semibold mb-4">New Sales Order</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <input className="input" placeholder="Customer ID" value={form.customer_id} onChange={(e)=>setForm({...form, customer_id:e.target.value})} />
-            <input className="input" type="date" value={form.so_date} onChange={(e)=>setForm({...form, so_date:e.target.value})} />
-            <input className="input" type="date" value={form.delivery_date} onChange={(e)=>setForm({...form, delivery_date:e.target.value})} />
-            <input className="input md:col-span-3" placeholder="Payment terms" value={form.payment_terms} onChange={(e)=>setForm({...form, payment_terms:e.target.value})} />
-            <input className="input md:col-span-3" placeholder="Notes" value={form.notes} onChange={(e)=>setForm({...form, notes:e.target.value})} />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Customer ID *</label>
+              <input 
+                className="input" 
+                placeholder="Enter Customer ID (e.g., 1)" 
+                value={form.customer_id} 
+                onChange={(e)=>setForm({...form, customer_id:e.target.value})} 
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">SO Date *</label>
+              <input 
+                className="input" 
+                type="date" 
+                value={form.so_date} 
+                onChange={(e)=>setForm({...form, so_date:e.target.value})}
+                title="Sales Order Date"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Expected Delivery Date</label>
+              <input 
+                className="input" 
+                type="date" 
+                value={form.delivery_date} 
+                onChange={(e)=>setForm({...form, delivery_date:e.target.value})}
+                title="Expected Delivery Date"
+              />
+            </div>
+            
+            {/* Customer Contact Details Section */}
+            <div className="md:col-span-3 border-t pt-4 mt-2">
+              <h4 className="text-sm font-medium text-gray-800 mb-3 flex items-center">
+                Customer Contact Details 
+                {fetchingCustomer && <span className="ml-2 text-xs text-blue-600">(Loading...)</span>}
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
+                  <input 
+                    className="input bg-gray-50" 
+                    value={customerDetails.email} 
+                    readOnly
+                    placeholder={form.customer_id ? "Enter valid Customer ID" : "Auto-filled when Customer ID is entered"}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Phone Number</label>
+                  <input 
+                    className="input bg-gray-50" 
+                    value={customerDetails.mobile} 
+                    readOnly
+                    placeholder={form.customer_id ? "Enter valid Customer ID" : "Auto-filled when Customer ID is entered"}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">GST Number</label>
+                  <input 
+                    className="input bg-gray-50 font-mono text-sm" 
+                    value={customerDetails.gst_number} 
+                    readOnly
+                    placeholder={form.customer_id ? "Enter valid Customer ID" : "Auto-filled when Customer ID is entered"}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Address</label>
+                  <input 
+                    className="input bg-gray-50" 
+                    value={customerDetails.address} 
+                    readOnly
+                    placeholder={form.customer_id ? "Enter valid Customer ID" : "Auto-filled when Customer ID is entered"}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
           <LineItemsTable items={items} setItems={setItems} />
           <div className="flex justify-end mt-4 space-x-3">
