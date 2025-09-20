@@ -38,25 +38,46 @@ def balance_sheet(request):
     """Generate Balance Sheet report"""
     as_of_date = request.GET.get('as_of_date', timezone.now().date())
     
-    # Get all active accounts
-    accounts = ChartOfAccount.objects.filter(is_active=True)
+    # Calculate actual balances from transactions
+    from transactions.models import CustomerInvoice, VendorBill
     
-    # Calculate balances for each account type
     balance_sheet_data = []
     
-    # Assets
-    assets = accounts.filter(type='asset')
-    total_assets = 0
-    for account in assets:
-        # Calculate current balance (simplified - in real app, calculate from transactions)
-        balance = account.current_balance
-        total_assets += balance
-        balance_sheet_data.append({
-            'account_name': account.name,
-            'account_type': 'asset',
-            'balance': balance,
-            'is_total': False
-        })
+    # Assets - Calculate from customer invoices and cash
+    total_receivables = CustomerInvoice.objects.filter(
+        invoice_date__lte=as_of_date,
+        status__in=['pending', 'partially_paid']
+    ).aggregate(total=Sum('balance_due'))['total'] or 0
+    
+    total_cash = CustomerInvoice.objects.filter(
+        invoice_date__lte=as_of_date,
+        status='paid'
+    ).aggregate(total=Sum('grand_total'))['total'] or 0
+    
+    # Subtract cash paid for vendor bills
+    cash_paid = VendorBill.objects.filter(
+        bill_date__lte=as_of_date,
+        status='paid'
+    ).aggregate(total=Sum('grand_total'))['total'] or 0
+    
+    total_cash = (total_cash or 0) - (cash_paid or 0)
+    
+    # Add asset accounts
+    balance_sheet_data.append({
+        'account_name': 'Cash',
+        'account_type': 'asset',
+        'balance': max(total_cash, 0),
+        'is_total': False
+    })
+    
+    balance_sheet_data.append({
+        'account_name': 'Accounts Receivable',
+        'account_type': 'asset',
+        'balance': total_receivables,
+        'is_total': False
+    })
+    
+    total_assets = max(total_cash, 0) + total_receivables
     
     balance_sheet_data.append({
         'account_name': 'Total Assets',
@@ -65,33 +86,30 @@ def balance_sheet(request):
         'is_total': True
     })
     
-    # Liabilities
-    liabilities = accounts.filter(type='liability')
-    total_liabilities = 0
-    for account in liabilities:
-        balance = account.current_balance
-        total_liabilities += balance
-        balance_sheet_data.append({
-            'account_name': account.name,
-            'account_type': 'liability',
-            'balance': balance,
-            'is_total': False
-        })
+    # Liabilities - Calculate from vendor bills
+    total_payables = VendorBill.objects.filter(
+        bill_date__lte=as_of_date,
+        status__in=['pending', 'partially_paid']
+    ).aggregate(total=Sum('balance_due'))['total'] or 0
     
-    # Equity
-    equity = accounts.filter(type='equity')
-    total_equity = 0
-    for account in equity:
-        balance = account.current_balance
-        total_equity += balance
-        balance_sheet_data.append({
-            'account_name': account.name,
-            'account_type': 'equity',
-            'balance': balance,
-            'is_total': False
-        })
+    balance_sheet_data.append({
+        'account_name': 'Accounts Payable',
+        'account_type': 'liability',
+        'balance': total_payables,
+        'is_total': False
+    })
     
-    total_liabilities_equity = total_liabilities + total_equity
+    # Equity - Calculate as balancing figure
+    total_equity = total_assets - total_payables
+    
+    balance_sheet_data.append({
+        'account_name': 'Retained Earnings',
+        'account_type': 'equity',
+        'balance': total_equity,
+        'is_total': False
+    })
+    
+    total_liabilities_equity = total_payables + total_equity
     balance_sheet_data.append({
         'account_name': 'Total Liabilities & Equity',
         'account_type': 'liability_equity',
@@ -105,7 +123,7 @@ def balance_sheet(request):
         'data': serializer.data,
         'total_assets': total_assets,
         'total_liabilities_equity': total_liabilities_equity,
-        'is_balanced': total_assets == total_liabilities_equity
+        'is_balanced': abs(total_assets - total_liabilities_equity) < 0.01
     })
 
 
@@ -116,25 +134,27 @@ def profit_loss(request):
     start_date = request.GET.get('start_date', (timezone.now().date() - timedelta(days=30)))
     end_date = request.GET.get('end_date', timezone.now().date())
     
-    # Get income and expense accounts
-    income_accounts = ChartOfAccount.objects.filter(type='income', is_active=True)
-    expense_accounts = ChartOfAccount.objects.filter(type='expense', is_active=True)
+    # Convert string dates to date objects if needed
+    if isinstance(start_date, str):
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+    if isinstance(end_date, str):
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
     
     profit_loss_data = []
     
-    # Income
-    total_income = 0
-    for account in income_accounts:
-        # Calculate income from transactions (simplified)
-        amount = account.current_balance  # In real app, calculate from date range
-        total_income += amount
-        profit_loss_data.append({
-            'account_name': account.name,
-            'account_type': 'income',
-            'amount': amount,
-            'is_total': False
-        })
+    # Income - Calculate from customer invoices
+    total_sales = CustomerInvoice.objects.filter(
+        invoice_date__range=[start_date, end_date]
+    ).aggregate(total=Sum('grand_total'))['total'] or 0
     
+    profit_loss_data.append({
+        'account_name': 'Sales Revenue',
+        'account_type': 'income',
+        'amount': total_sales,
+        'is_total': False
+    })
+    
+    total_income = total_sales
     profit_loss_data.append({
         'account_name': 'Total Income',
         'account_type': 'income',
@@ -142,19 +162,19 @@ def profit_loss(request):
         'is_total': True
     })
     
-    # Expenses
-    total_expenses = 0
-    for account in expense_accounts:
-        # Calculate expenses from transactions (simplified)
-        amount = account.current_balance  # In real app, calculate from date range
-        total_expenses += amount
-        profit_loss_data.append({
-            'account_name': account.name,
-            'account_type': 'expense',
-            'amount': amount,
-            'is_total': False
-        })
+    # Expenses - Calculate from vendor bills
+    total_purchases = VendorBill.objects.filter(
+        bill_date__range=[start_date, end_date]
+    ).aggregate(total=Sum('grand_total'))['total'] or 0
     
+    profit_loss_data.append({
+        'account_name': 'Cost of Goods Sold',
+        'account_type': 'expense',
+        'amount': total_purchases,
+        'is_total': False
+    })
+    
+    total_expenses = total_purchases
     profit_loss_data.append({
         'account_name': 'Total Expenses',
         'account_type': 'expense',
@@ -186,20 +206,28 @@ def profit_loss(request):
 @permission_classes([permissions.IsAuthenticated])
 def partner_ledger(request):
     """Generate Partner Ledger report"""
-    contact_id = request.GET.get('contact_id')
+    partner_id = request.GET.get('partner_id')
     start_date = request.GET.get('start_date', (timezone.now().date() - timedelta(days=30)))
     end_date = request.GET.get('end_date', timezone.now().date())
     
-    if not contact_id:
-        return Response({'error': 'Contact ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+    if not partner_id:
+        return Response({'error': 'Partner ID is required'}, status=status.HTTP_400_BAD_REQUEST)
     
     try:
-        contact = Contact.objects.get(id=contact_id)
+        contact = Contact.objects.get(id=partner_id)
     except Contact.DoesNotExist:
         return Response({'error': 'Contact not found'}, status=status.HTTP_404_NOT_FOUND)
     
+    # Convert string dates to date objects if needed
+    if isinstance(start_date, str):
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+    if isinstance(end_date, str):
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+    
     ledger_data = []
     running_balance = 0
+    total_debit = 0
+    total_credit = 0
     
     # Get customer invoices
     invoices = CustomerInvoice.objects.filter(
@@ -208,34 +236,16 @@ def partner_ledger(request):
     ).order_by('invoice_date')
     
     for invoice in invoices:
-        running_balance += invoice.grand_total
+        running_balance += float(invoice.grand_total)
+        total_debit += float(invoice.grand_total)
         ledger_data.append({
             'date': invoice.invoice_date,
             'transaction_type': 'Invoice',
             'reference': invoice.invoice_number,
-            'description': f'Invoice for {invoice.grand_total}',
-            'debit': invoice.grand_total,
+            'description': f'Invoice #{invoice.invoice_number}',
+            'debit': float(invoice.grand_total),
             'credit': 0,
-            'balance': running_balance
-        })
-    
-    # Get payments received
-    payments = Payment.objects.filter(
-        contact=contact,
-        payment_type='customer_payment',
-        payment_date__range=[start_date, end_date]
-    ).order_by('payment_date')
-    
-    for payment in payments:
-        running_balance -= payment.amount
-        ledger_data.append({
-            'date': payment.payment_date,
-            'transaction_type': 'Payment',
-            'reference': payment.payment_number,
-            'description': f'Payment received {payment.amount}',
-            'debit': 0,
-            'credit': payment.amount,
-            'balance': running_balance
+            'running_balance': running_balance
         })
     
     # Get vendor bills
@@ -245,34 +255,16 @@ def partner_ledger(request):
     ).order_by('bill_date')
     
     for bill in bills:
-        running_balance -= bill.grand_total
+        running_balance -= float(bill.grand_total)
+        total_credit += float(bill.grand_total)
         ledger_data.append({
             'date': bill.bill_date,
             'transaction_type': 'Bill',
             'reference': bill.bill_number,
-            'description': f'Bill for {bill.grand_total}',
+            'description': f'Bill #{bill.bill_number}',
             'debit': 0,
-            'credit': bill.grand_total,
-            'balance': running_balance
-        })
-    
-    # Get payments made
-    vendor_payments = Payment.objects.filter(
-        contact=contact,
-        payment_type='vendor_payment',
-        payment_date__range=[start_date, end_date]
-    ).order_by('payment_date')
-    
-    for payment in vendor_payments:
-        running_balance += payment.amount
-        ledger_data.append({
-            'date': payment.payment_date,
-            'transaction_type': 'Payment',
-            'reference': payment.payment_number,
-            'description': f'Payment made {payment.amount}',
-            'debit': payment.amount,
-            'credit': 0,
-            'balance': running_balance
+            'credit': float(bill.grand_total),
+            'running_balance': running_balance
         })
     
     # Sort by date
@@ -281,11 +273,92 @@ def partner_ledger(request):
     serializer = PartnerLedgerSerializer(ledger_data, many=True)
     return Response({
         'contact_name': contact.name,
-        'contact_type': contact.type,
+        'contact_type': contact.contact_type,
         'start_date': start_date,
         'end_date': end_date,
-        'data': serializer.data,
-        'closing_balance': running_balance
+        'opening_balance': 0,  # Simplified - would calculate from earlier transactions
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def partner_ledger(request):
+    """Generate Partner Ledger report"""
+    partner_id = request.GET.get('partner_id')
+    start_date = request.GET.get('start_date', (timezone.now().date() - timedelta(days=30)))
+    end_date = request.GET.get('end_date', timezone.now().date())
+    
+    if not partner_id:
+        return Response({'error': 'Partner ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        contact = Contact.objects.get(id=partner_id)
+    except Contact.DoesNotExist:
+        return Response({'error': 'Contact not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Convert string dates to date objects if needed
+    if isinstance(start_date, str):
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+    if isinstance(end_date, str):
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+    
+    ledger_data = []
+    running_balance = 0
+    total_debit = 0
+    total_credit = 0
+    
+    # Get customer invoices
+    invoices = CustomerInvoice.objects.filter(
+        customer=contact,
+        invoice_date__range=[start_date, end_date]
+    ).order_by('invoice_date')
+    
+    for invoice in invoices:
+        running_balance += float(invoice.grand_total)
+        total_debit += float(invoice.grand_total)
+        ledger_data.append({
+            'date': invoice.invoice_date,
+            'transaction_type': 'Invoice',
+            'reference': invoice.invoice_number,
+            'description': f'Invoice #{invoice.invoice_number}',
+            'debit': float(invoice.grand_total),
+            'credit': 0,
+            'running_balance': running_balance
+        })
+    
+    # Get vendor bills
+    bills = VendorBill.objects.filter(
+        vendor=contact,
+        bill_date__range=[start_date, end_date]
+    ).order_by('bill_date')
+    
+    for bill in bills:
+        running_balance -= float(bill.grand_total)
+        total_credit += float(bill.grand_total)
+        ledger_data.append({
+            'date': bill.bill_date,
+            'transaction_type': 'Bill',
+            'reference': bill.bill_number,
+            'description': f'Bill #{bill.bill_number}',
+            'debit': 0,
+            'credit': float(bill.grand_total),
+            'running_balance': running_balance
+        })
+    
+    # Sort by date
+    ledger_data.sort(key=lambda x: x['date'])
+    
+    serializer = PartnerLedgerSerializer(ledger_data, many=True)
+    return Response({
+        'contact_name': contact.name,
+        'contact_type': contact.contact_type,
+        'start_date': start_date,
+        'end_date': end_date,
+        'opening_balance': 0,  # Simplified - would calculate from earlier transactions
+        'closing_balance': running_balance,
+        'total_debit': total_debit,
+        'total_credit': total_credit,
+        'transactions': serializer.data
     })
 
 
@@ -293,22 +366,53 @@ def partner_ledger(request):
 @permission_classes([permissions.IsAuthenticated])
 def stock_report(request):
     """Generate Stock Report"""
-    stock_balances = StockBalance.objects.select_related('product').all()
+    from master_data.models import Product
+    from transactions.models import CustomerInvoiceLineItem, VendorBillLineItem
+    
+    as_of_date = request.GET.get('as_of_date', timezone.now().date())
+    
+    # Get all products
+    products = Product.objects.filter(is_active=True)
     
     stock_data = []
     total_stock_value = 0
     
-    for balance in stock_balances:
-        total_stock_value += balance.stock_value
+    for product in products:
+        # Calculate purchased quantity from vendor bills
+        purchased_qty = VendorBillLineItem.objects.filter(
+            product=product,
+            vendor_bill__bill_date__lte=as_of_date
+        ).aggregate(total=Sum('quantity'))['total'] or 0
+        
+        # Calculate sold quantity from customer invoices
+        sold_qty = CustomerInvoiceLineItem.objects.filter(
+            product=product,
+            customer_invoice__invoice_date__lte=as_of_date
+        ).aggregate(total=Sum('quantity'))['total'] or 0
+        
+        # Current quantity = purchased - sold
+        current_qty = purchased_qty - sold_qty
+        
+        # Calculate average cost from purchases
+        total_purchase_value = VendorBillLineItem.objects.filter(
+            product=product,
+            vendor_bill__bill_date__lte=as_of_date
+        ).aggregate(total=Sum(F('quantity') * F('unit_price')))['total'] or 0
+        
+        avg_cost = (total_purchase_value / purchased_qty) if purchased_qty > 0 else product.selling_price or 0
+        stock_value = current_qty * avg_cost
+        total_stock_value += stock_value
+        
         stock_data.append({
-            'product_name': balance.product.name,
-            'product_type': balance.product.type,
-            'opening_quantity': balance.opening_quantity,
-            'purchased_quantity': balance.purchased_quantity,
-            'sold_quantity': balance.sold_quantity,
-            'current_quantity': balance.current_quantity,
-            'average_cost': balance.average_cost,
-            'stock_value': balance.stock_value
+            'product_name': product.name,
+            'product_type': product.type,
+            'product_sku': product.sku,
+            'opening_quantity': 0,  # Simplified - would need opening stock feature
+            'purchased_quantity': purchased_qty,
+            'sold_quantity': sold_qty,
+            'current_quantity': current_qty,
+            'average_cost': avg_cost,
+            'stock_value': stock_value
         })
     
     serializer = StockReportSerializer(stock_data, many=True)

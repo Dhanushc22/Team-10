@@ -21,7 +21,16 @@ const SalesOrder = () => {
   // Set today's date as default for SO date
   const today = new Date().toISOString().split('T')[0];
   const [form, setForm] = useState({ customer_id: '', so_date: today, delivery_date: '' });
-  const [items, setItems] = useState([{ product_id: '', quantity: 1, unit_price: 0, tax_percent: 0 }]);
+  const [items, setItems] = useState([{ 
+    product_id: '', 
+    product_name: '',
+    quantity: 1, 
+    unit_price: 0, 
+    tax_percent: 0,
+    subtotal: 0,
+    tax_amount: 0,
+    total: 0
+  }]);
   const [customerDetails, setCustomerDetails] = useState({ name: '', email: '', mobile: '', address: '', gst_number: '' });
 
   const createMutation = useMutation(() => {
@@ -44,7 +53,16 @@ const SalesOrder = () => {
     onSuccess: () => { 
       toast.success('Sales Order created'); 
       setShowForm(false); 
-      setItems([{ product_id:'', quantity:1, unit_price:0, tax_percent:0 }]); 
+      setItems([{ 
+        product_id:'', 
+        product_name: '',
+        quantity:1, 
+        unit_price:0, 
+        tax_percent:0,
+        subtotal: 0,
+        tax_amount: 0,
+        total: 0
+      }]); 
       setForm({ customer_id:'', so_date:today, delivery_date:'' });
       setCustomerDetails({ name: '', email: '', mobile: '', address: '', gst_number: '' }); 
       queryClient.invalidateQueries('sales-orders'); 
@@ -173,9 +191,12 @@ const SalesOrder = () => {
             {(soData?.results || soData || []).map((so) => (
               <tr key={so.id}>
                 <td className="px-4 py-2">{so.so_number}</td>
-                <td className="px-4 py-2">{so.customer?.name}</td>
+                <td className="px-4 py-2">
+                  {so.customer_name || so.customer?.name || `Customer ID: ${so.customer}`}
+                </td>
                 <td className="px-4 py-2">₹{so.grand_total}</td>
-                <td className="px-4 py-2 text-right">
+                <td className="px-4 py-2 text-right space-x-2">
+                  <a href={`/transactions/sales-orders/${so.id}`} className="px-3 py-1 bg-gray-100 rounded-md text-sm">View</a>
                   <button onClick={() => convertMutation.mutate(so.id)} className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm">Convert to Invoice</button>
                 </td>
               </tr>

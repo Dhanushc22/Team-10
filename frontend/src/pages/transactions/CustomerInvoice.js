@@ -97,7 +97,9 @@ const CustomerInvoice = () => {
             {(invData?.results || invData || []).map((inv) => (
               <tr key={inv.id}>
                 <td className="px-4 py-2">{inv.invoice_number}</td>
-                <td className="px-4 py-2">{inv.customer?.name}</td>
+                <td className="px-4 py-2">
+                  {inv.customer_name || inv.customer?.name || `Customer ID: ${inv.customer}`}
+                </td>
                 <td className="px-4 py-2">₹{inv.grand_total}</td>
                 <td className="px-4 py-2">₹{inv.balance_due}</td>
                 <td className="px-4 py-2 text-right space-x-2">

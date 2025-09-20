@@ -181,9 +181,12 @@ const PurchaseOrder = () => {
             {(poData?.results || poData || []).map((po) => (
               <tr key={po.id}>
                 <td className="px-4 py-2">{po.po_number}</td>
-                <td className="px-4 py-2">{po.vendor?.name}</td>
+                <td className="px-4 py-2">
+                  {po.vendor_name || po.vendor?.name || `Vendor ID: ${po.vendor}`}
+                </td>
                 <td className="px-4 py-2">₹{po.grand_total}</td>
-                <td className="px-4 py-2 text-right">
+                <td className="px-4 py-2 text-right space-x-2">
+                  <a href={`/transactions/purchase-orders/${po.id}`} className="px-3 py-1 bg-gray-100 rounded-md text-sm">View</a>
                   <button onClick={() => convertMutation.mutate(po.id)} className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm">Convert to Bill</button>
                 </td>
               </tr>

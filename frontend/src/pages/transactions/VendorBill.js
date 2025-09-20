@@ -17,9 +17,33 @@ const VendorBill = () => {
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ vendor_id: '', bill_date: '', due_date: '', purchase_order_id: '' });
-  const [items, setItems] = useState([{ product_id: '', quantity: 1, unit_price: 0, tax_percent: 0 }]);
+  const [items, setItems] = useState([{ 
+    product_id: '', 
+    product_name: '',
+    quantity: 1, 
+    unit_price: 0, 
+    tax_percent: 0,
+    subtotal: 0,
+    tax_amount: 0,
+    total: 0
+  }]);
   const createMutation = useMutation(() => transactionsAPI.createVendorBillWithItems({ ...form, items }), {
-    onSuccess: () => { toast.success('Vendor Bill created'); setShowForm(false); setItems([{ product_id:'', quantity:1, unit_price:0, tax_percent:0 }]); setForm({ vendor_id:'', bill_date:'', due_date:'', purchase_order_id:'' }); queryClient.invalidateQueries('vendor-bills'); },
+    onSuccess: () => { 
+      toast.success('Vendor Bill created'); 
+      setShowForm(false); 
+      setItems([{ 
+        product_id:'', 
+        product_name: '',
+        quantity:1, 
+        unit_price:0, 
+        tax_percent:0,
+        subtotal: 0,
+        tax_amount: 0,
+        total: 0
+      }]); 
+      setForm({ vendor_id:'', bill_date:'', due_date:'', purchase_order_id:'' }); 
+      queryClient.invalidateQueries('vendor-bills'); 
+    },
     onError: () => toast.error('Failed to create vendor bill')
   });
 
@@ -65,10 +89,13 @@ const VendorBill = () => {
             {(billData?.results || billData || []).map((bill) => (
               <tr key={bill.id}>
                 <td className="px-4 py-2">{bill.bill_number}</td>
-                <td className="px-4 py-2">{bill.vendor?.name}</td>
+                <td className="px-4 py-2">
+                  {bill.vendor_name || bill.vendor?.name || `Vendor ID: ${bill.vendor}`}
+                </td>
                 <td className="px-4 py-2">₹{bill.grand_total}</td>
                 <td className="px-4 py-2">₹{bill.balance_due}</td>
                 <td className="px-4 py-2 text-right space-x-2">
+                  <a href={`/transactions/vendor-bills/${bill.id}`} className="px-3 py-1 bg-gray-100 rounded-md text-sm">View</a>
                   {bill.balance_due > 0 && (
                     <button onClick={() => quickPay.mutate({ id: bill.id, amount: bill.balance_due })} className="px-3 py-1 bg-green-600 text-white rounded-md text-sm">Quick Pay</button>
                   )}
