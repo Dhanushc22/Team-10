@@ -19,7 +19,16 @@ const PurchaseOrder = () => {
   // Set today's date as default for PO date
   const today = new Date().toISOString().split('T')[0];
   const [form, setForm] = useState({ vendor_id: '', po_date: today, delivery_date: '' });
-  const [items, setItems] = useState([{ product_id: '', quantity: 1, unit_price: 0, tax_percent: 0 }]);
+  const [items, setItems] = useState([{ 
+    product_id: '', 
+    product_name: '',
+    quantity: 1, 
+    unit_price: 0, 
+    tax_percent: 0,
+    subtotal: 0,
+    tax_amount: 0,
+    total: 0
+  }]);
   const [vendorDetails, setVendorDetails] = useState({ email: '', mobile: '', address: '', gst_number: '' });
   const [fetchingVendor, setFetchingVendor] = useState(false);
 
@@ -74,7 +83,16 @@ const PurchaseOrder = () => {
     onSuccess: () => { 
       toast.success('Purchase Order created'); 
       setShowForm(false); 
-      setItems([{ product_id:'', quantity:1, unit_price:0, tax_percent:0 }]); 
+      setItems([{ 
+        product_id:'', 
+        product_name: '',
+        quantity:1, 
+        unit_price:0, 
+        tax_percent:0,
+        subtotal: 0,
+        tax_amount: 0,
+        total: 0
+      }]); 
       setForm({ vendor_id:'', po_date:today, delivery_date:'' });
       setVendorDetails({ email: '', mobile: '', address: '', gst_number: '' }); 
       queryClient.invalidateQueries('purchase-orders'); 
