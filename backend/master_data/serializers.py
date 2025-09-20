@@ -75,7 +75,8 @@ class ProductListSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Product
-        fields = ['id', 'name', 'type', 'sales_price', 'purchase_price', 'hsn_code']
+        fields = ['id', 'name', 'type', 'sales_price', 'purchase_price', 
+                 'sale_tax_percent', 'purchase_tax_percent', 'hsn_code']
 
 
 class TaxListSerializer(serializers.ModelSerializer):

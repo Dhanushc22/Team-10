@@ -73,7 +73,7 @@ const ProductMaster = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Product Master</h1>
-          <p className="text-gray-600">Manage your products and services</p>
+          <p className="text-gray-600">Manage your products, services, and tax rates</p>
         </div>
         <button onClick={() => setShowForm(true)} className="btn btn-primary flex items-center"><Plus className="h-4 w-4 mr-2"/>New Product</button>
       </div>
@@ -168,22 +168,26 @@ const ProductMaster = () => {
                     <th>Type</th>
                     <th>Sales Price</th>
                     <th>Purchase Price</th>
+                    <th>Sales Tax %</th>
+                    <th>Purchase Tax %</th>
                     <th>HSN</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {isLoading ? (
-                    <tr><td colSpan="6" className="text-center py-8">Loading...</td></tr>
+                    <tr><td colSpan="8" className="text-center py-8">Loading...</td></tr>
                   ) : items.length === 0 ? (
-                    <tr><td colSpan="6" className="text-center py-8 text-gray-500">No products found</td></tr>
+                    <tr><td colSpan="8" className="text-center py-8 text-gray-500">No products found</td></tr>
                   ) : (
                     items.map((item) => (
                       <tr key={item.id} className="hover:bg-gray-50">
                         <td className="font-medium">{item.name}</td>
-                        <td>{item.type}</td>
+                        <td className="capitalize">{item.type}</td>
                         <td>₹{item.sales_price}</td>
                         <td>₹{item.purchase_price}</td>
+                        <td>{item.sale_tax_percent || '0.00'}%</td>
+                        <td>{item.purchase_tax_percent || '0.00'}%</td>
                         <td>{item.hsn_code || '-'}</td>
                         <td>
                           <div className="flex items-center space-x-2">
