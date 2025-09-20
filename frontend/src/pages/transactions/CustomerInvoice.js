@@ -70,11 +70,9 @@ const CustomerInvoice = () => {
             <input className="input" placeholder="Customer ID" value={form.customer_id} onChange={(e)=>setForm({...form, customer_id:e.target.value})} />
             <input className="input" type="date" value={form.invoice_date} onChange={(e)=>setForm({...form, invoice_date:e.target.value})} />
             <input className="input" type="date" value={form.due_date} onChange={(e)=>setForm({...form, due_date:e.target.value})} />
-            <input className="input md:col-span-3" placeholder="Payment terms" value={form.payment_terms} onChange={(e)=>setForm({...form, payment_terms:e.target.value})} />
             <input className="input md:col-span-3" placeholder="Reference (SO)" value={form.reference} onChange={(e)=>setForm({...form, reference:e.target.value})} />
-            <input className="input md:col-span-3" placeholder="Notes" value={form.notes} onChange={(e)=>setForm({...form, notes:e.target.value})} />
           </div>
-          <LineItemsTable items={items} setItems={setItems} />
+          <LineItemsTable items={items} setItems={setItems} transactionType="sales" />
           <div className="flex justify-end mt-4 space-x-3">
             <button className="btn btn-secondary" onClick={()=>setShowForm(false)}>Cancel</button>
             <button className="btn btn-primary" onClick={handleSave}>Save Invoice</button>

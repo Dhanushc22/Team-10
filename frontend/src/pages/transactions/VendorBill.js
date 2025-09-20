@@ -66,7 +66,7 @@ const VendorBill = () => {
             <input className="input" type="date" value={form.due_date} onChange={(e)=>setForm({...form, due_date:e.target.value})} />
             <input className="input md:col-span-3" placeholder="Purchase Order ID (optional)" value={form.purchase_order_id} onChange={(e)=>setForm({...form, purchase_order_id:e.target.value})} />
           </div>
-          <LineItemsTable items={items} setItems={setItems} />
+          <LineItemsTable items={items} setItems={setItems} transactionType="purchase" />
           <div className="flex justify-end mt-4 space-x-3">
             <button className="btn btn-secondary" onClick={()=>setShowForm(false)}>Cancel</button>
             <button className="btn btn-primary" onClick={()=>createMutation.mutate()}>Save Vendor Bill</button>
