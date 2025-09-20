@@ -147,14 +147,14 @@ The system implements comprehensive role-based access control with three distinc
 
 **3. 👤 Demo Customer User**
 - **Email**: `customer@demo.com`
-- **Password**: `demo123`
+- **Password**: `demo12345`
 - **Role**: `contact`
 - **Access**: React app only (no Django admin)
 - **Use Case**: Customer portal testing
 
 **4. 👤 Demo Vendor User**
 - **Email**: `vendor@demo.com`
-- **Password**: `demo123`
+- **Password**: `demo12345`
 - **Role**: `contact`
 - **Access**: React app only (no Django admin)
 - **Use Case**: Vendor portal testing
