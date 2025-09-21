@@ -62,13 +62,13 @@ Shiv Accounts Cloud is a **complete full-stack accounting system** for small bus
   - Opening and current balance tracking
   - Full account name hierarchy generation
   
-- ✅ **HSN Search Integration**: Real-time Government GST API integration
-  - Live HSN code lookup via official GST portal
-  - Comprehensive furniture business database (200+ HSN codes)
-  - Search by code, product description, or service type
-  - Category-specific intelligent suggestions
-  - Service Accounting Code (SAC) support
-  - Mock data fallback for offline functionality
+- ✅ **HSN Search Integration**: Real-time Government GST API via backend proxy
+  - Live HSN lookup through official GST portal, proxied by Django to avoid CORS
+  - Transformed response to `{ hsn_code, description, gst_rate }` for consistent UI
+  - Search by HSN code (`byCode`) or description (`byDesc`) with category `P|S|null`
+  - Input validation: requires ≥3 characters (2+ for numeric codes) before search
+  - Auth required on backend endpoint (`Authorization: Token <token>`) 
+  - Optional mock data fallback for development scenarios
 
 #### **Transaction Processing - 100% Complete**
 - ✅ **Sales Orders**: Create/edit with line items, auto-calculations, convert to invoices
@@ -481,6 +481,17 @@ The system implements comprehensive role-based access control with three distinc
 
 **HSN Search:**
 - `GET /api/master-data/hsn-search/` - Government GST API proxy
+  - Query params:
+    - `inputText` (required): search term (min 3 characters; 2+ for numeric)
+    - `selectedType` (required): `byCode` | `byDesc`
+    - `category` (optional): `P` | `S` | `null`
+  - Auth: `Authorization: Token <token>`
+  - Response: list of `{ hsn_code, description, gst_rate }`
+  - Example:
+    ```bash
+    curl -H "Authorization: Token <token>" \
+      "http://localhost:8000/api/master-data/hsn-search/?inputText=furniture&selectedType=byDesc&category=P"
+    ```
 - `GET /api/master-data/hsn-search/mock/` - Mock HSN data for testing
 - `GET /api/master-data/summary/` - Master data summary statistics
 

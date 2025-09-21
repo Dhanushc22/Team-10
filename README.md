@@ -35,12 +35,12 @@ A comprehensive cloud-based accounting system for Shiv Furniture that enables en
   - Full account name hierarchy generation
 
 - **HSN Search Integration**:
-  - Real-time HSN code lookup via Government GST API
-  - Comprehensive furniture business HSN database with 200+ codes
+  - Real-time HSN code lookup via Government GST API (proxied by backend)
+  - Transformed response to `{ hsn_code, description, gst_rate }`
   - Search by HSN code, product description, or service type
-  - Intelligent search with category-specific suggestions
-  - Mock data fallback for offline functionality
-  - Service Accounting Code (SAC) support for services
+  - Input validation (min 3 chars) to meet GST API requirements
+  - Optional mock fallback for dev scenarios
+  - See `docs/hsn-api-integration.md` for details
 
 ### Transaction Management
 - **Purchase Orders**: 
@@ -221,6 +221,13 @@ The backend will be available at `http://localhost:8000`
 
 The frontend will be available at `http://localhost:3000`
 
+4. **Environment variables** (optional but recommended):
+   - Create a `.env` in `frontend/` or copy `env.example`:
+   ```env
+   REACT_APP_API_URL=http://localhost:8000/api
+   ```
+   The frontend picks this up for API requests.
+
 ## API Documentation
 
 The API follows RESTful conventions and includes:
@@ -238,6 +245,13 @@ The API follows RESTful conventions and includes:
 - `GET /api/master-data/products/` - List products
 - `POST /api/master-data/products/` - Create product
 - And more...
+
+#### HSN Search (GST API Proxy)
+- `GET /api/master-data/hsn-search/` - Search HSN codes
+  - Query: `inputText`, `selectedType` = `byCode|byDesc`, `category` = `P|S|null`
+  - Auth required: `Authorization: Token <token>`
+  - Response: list of `{ hsn_code, description, gst_rate }`
+  - See `docs/hsn-api-integration.md`
 
 ### Transaction Endpoints
 - `GET /api/transactions/purchase-orders/` - List purchase orders
