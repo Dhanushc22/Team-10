@@ -13,8 +13,11 @@ import ContactMaster from './pages/master-data/ContactMaster';
 import ProductMaster from './pages/master-data/ProductMaster';
 import ChartOfAccounts from './pages/master-data/ChartOfAccounts';
 import PurchaseOrder from './pages/transactions/PurchaseOrder';
+import PurchaseOrderDetail from './pages/transactions/PurchaseOrderDetail';
 import VendorBill from './pages/transactions/VendorBill';
+import VendorBillDetail from './pages/transactions/VendorBillDetail';
 import SalesOrder from './pages/transactions/SalesOrder';
+import SalesOrderDetail from './pages/transactions/SalesOrderDetail';
 import CustomerInvoice from './pages/transactions/CustomerInvoice';
 import Payments from './pages/transactions/Payments';
 import BalanceSheet from './pages/reports/BalanceSheet';
@@ -93,8 +96,11 @@ function App() {
                 
                 {/* Transaction Routes */}
                 <Route path="transactions/purchase-orders" element={<PurchaseOrder />} />
+                <Route path="transactions/purchase-orders/:id" element={<PurchaseOrderDetail />} />
                 <Route path="transactions/vendor-bills" element={<VendorBill />} />
+                <Route path="transactions/vendor-bills/:id" element={<VendorBillDetail />} />
                 <Route path="transactions/sales-orders" element={<SalesOrder />} />
+                <Route path="transactions/sales-orders/:id" element={<SalesOrderDetail />} />
                 <Route path="transactions/customer-invoices" element={<CustomerInvoice />} />
                 <Route path="transactions/customer-invoices/:id" element={<InvoiceDetail />} />
                 <Route path="transactions/payments" element={<Payments />} />

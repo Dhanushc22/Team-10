@@ -86,6 +86,15 @@ class VendorBill(models.Model):
     
     def save(self, *args, **kwargs):
         self.balance_due = self.grand_total - self.paid_amount
+        
+        # Auto-update status based on payment
+        if self.paid_amount >= self.grand_total:
+            self.status = 'paid'
+        elif self.paid_amount > 0:
+            # Keep existing status for partial payments unless it's already paid
+            if self.status not in ['paid', 'cancelled']:
+                pass  # Keep current status (pending/overdue)
+        
         super().save(*args, **kwargs)
 
 
@@ -190,6 +199,15 @@ class CustomerInvoice(models.Model):
     
     def save(self, *args, **kwargs):
         self.balance_due = self.grand_total - self.paid_amount
+        
+        # Auto-update status based on payment
+        if self.paid_amount >= self.grand_total:
+            self.status = 'paid'
+        elif self.paid_amount > 0:
+            # Keep existing status for partial payments unless it's already paid
+            if self.status not in ['paid', 'cancelled']:
+                pass  # Keep current status (pending/overdue)
+        
         super().save(*args, **kwargs)
 
 

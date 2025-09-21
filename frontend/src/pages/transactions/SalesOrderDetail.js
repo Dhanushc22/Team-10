@@ -143,10 +143,10 @@ const SalesOrderDetail = () => {
                       )}
                     </td>
                     <td className="px-4 py-4 text-right text-gray-900">{item.quantity}</td>
-                    <td className="px-4 py-4 text-right text-gray-900">₹{item.unit_price?.toFixed(2)}</td>
+                    <td className="px-4 py-4 text-right text-gray-900">₹{formatCurrency(item.unit_price)}</td>
                     <td className="px-4 py-4 text-right text-gray-900">{item.tax_percent}%</td>
-                    <td className="px-4 py-4 text-right text-gray-900">₹{item.tax_amount?.toFixed(2)}</td>
-                    <td className="px-4 py-4 text-right font-medium text-gray-900">₹{item.total?.toFixed(2)}</td>
+                    <td className="px-4 py-4 text-right text-gray-900">₹{formatCurrency(item.tax_amount)}</td>
+                    <td className="px-4 py-4 text-right font-medium text-gray-900">₹{formatCurrency(item.total)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -163,15 +163,15 @@ const SalesOrderDetail = () => {
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Subtotal (Before Tax)</span>
-              <span className="font-medium">₹{so.subtotal?.toFixed(2) || '0.00'}</span>
+              <span className="font-medium">₹{formatCurrency(so.subtotal)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Tax Amount</span>
-              <span className="font-medium">₹{so.tax_total?.toFixed(2) || '0.00'}</span>
+              <span className="font-medium">₹{formatCurrency(so.tax_total)}</span>
             </div>
             <div className="flex justify-between items-center border-t pt-3">
               <span className="text-lg font-semibold text-gray-900">Grand Total</span>
-              <span className="text-xl font-bold text-gray-900">₹{so.grand_total?.toFixed(2) || '0.00'}</span>
+              <span className="text-xl font-bold text-gray-900">₹{formatCurrency(so.grand_total)}</span>
             </div>
           </div>
         </div>
