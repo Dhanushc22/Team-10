@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { transactionsAPI, masterDataAPI } from '../../services/api';
@@ -8,6 +8,7 @@ const Payments = () => {
   const queryClient = useQueryClient();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const formRef = useRef(null); // Reference to the payment form
   const { data: paymentData, isLoading: paymentsLoading } = useQuery('payments', () => transactionsAPI.getPayments().then(r => r.data));
   const { data: invData } = useQuery('customer-invoices', () => transactionsAPI.getCustomerInvoices().then(r => r.data));
   const { data: billData } = useQuery('vendor-bills', () => transactionsAPI.getVendorBills().then(r => r.data));
@@ -133,7 +134,18 @@ const Payments = () => {
         </div>
         <button 
           className="btn btn-primary"
-          onClick={() => setShowForm(true)}
+          onClick={() => {
+            setShowForm(true);
+            // Scroll to form after a short delay to ensure form is rendered
+            setTimeout(() => {
+              if (formRef.current) {
+                formRef.current.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'start' 
+                });
+              }
+            }, 100);
+          }}
         >
           New Payment
         </button>
@@ -207,7 +219,7 @@ const Payments = () => {
 
       {/* New Payment Form */}
       {showForm && (
-        <div className="card p-6 space-y-6">
+        <div ref={formRef} className="card p-6 space-y-6">
           <div className="flex justify-between items-center">
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Record New Payment</h3>

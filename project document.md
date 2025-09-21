@@ -34,37 +34,264 @@ Shiv Accounts Cloud is a **complete full-stack accounting system** for small bus
 
 #### **Master Data Management - 100% Complete**
 - ✅ **Contact Master**: Full CRUD for customers & vendors with portal linking
+  - Comprehensive contact profiles with GST registration
+  - Customer, vendor, or both type classification
+  - Address management with city, state, pincode
+  - Profile image uploads and mobile number validation
+  - User account linking for portal access
+  - Active/inactive status management
+  
 - ✅ **Product Master**: Full CRUD with pricing, tax rates, and HSN codes
+  - Goods and services classification
+  - Separate sales and purchase pricing configurations
+  - HSN code integration with automatic GST rate application
+  - Product categorization with detailed descriptions
+  - Tax percentage configuration for sales and purchases
+  - Active/inactive product status tracking
+  
 - ✅ **Tax Master**: GST and other tax configurations with computation methods
+  - Percentage-based and fixed-value tax calculations
+  - Sales, purchase, or both application settings
+  - Comprehensive tax descriptions and rate management
+  - Active status management for seasonal taxes
+  
 - ✅ **Chart of Accounts**: Hierarchical financial account structure
+  - Complete asset, liability, income, expense, equity classification
+  - Parent-child hierarchical relationships
+  - Account codes for systematic organization
+  - Opening and current balance tracking
+  - Full account name hierarchy generation
+  
+- ✅ **HSN Search Integration**: Real-time Government GST API integration
+  - Live HSN code lookup via official GST portal
+  - Comprehensive furniture business database (200+ HSN codes)
+  - Search by code, product description, or service type
+  - Category-specific intelligent suggestions
+  - Service Accounting Code (SAC) support
+  - Mock data fallback for offline functionality
 
 #### **Transaction Processing - 100% Complete**
 - ✅ **Sales Orders**: Create/edit with line items, auto-calculations, convert to invoices
+  - Complete customer order lifecycle management
+  - Product line items with quantity, pricing, and tax calculations
+  - Order status tracking (draft, confirmed, delivered, cancelled)
+  - Delivery date management and customer communication
+  - Automatic subtotal, tax, and grand total calculations
+  - One-click conversion to customer invoices
+  - Payment status integration with conditional payment buttons
+  
 - ✅ **Purchase Orders**: Create/edit with line items, auto-calculations, convert to bills
+  - Comprehensive vendor order management
+  - Vendor selection with automatic contact integration
+  - Line item management with product catalog integration
+  - Tax calculations with HSN-based rate application
+  - Order status management (draft, sent, received, cancelled)
+  - Delivery date tracking and vendor communication
+  - Seamless conversion to vendor bills
+  - Payment tracking with conditional payment buttons
+  
 - ✅ **Customer Invoices**: Create/edit with line items, payment tracking, status management
+  - Sales order to invoice conversion with data transfer
+  - Customer payment tracking with balance due calculations
+  - Invoice status management (pending, paid, overdue, cancelled)
+  - Reference number tracking and detailed invoice generation
+  - Line-by-line tax calculations with HSN code integration
+  - PDF generation capabilities for customer distribution
+  - Payment allocation tracking and status updates
+  
 - ✅ **Vendor Bills**: Create/edit with line items, payment tracking, status management
+  - Purchase order linked bill generation
+  - Due date management and vendor payment tracking
+  - Automatic payment status calculation (pending, paid, overdue)
+  - Balance due calculations with paid amount tracking
+  - Bill approval workflow and vendor payment processing
+  - Line item management with product and tax integration
+  - Payment allocation and vendor account reconciliation
+  
 - ✅ **Payment Processing**: Multi-allocation payments, quick pay, balance updates
+  - Unified payment system for both customers and vendors
+  - Multiple payment methods (cash, bank, cheque, online)
+  - Payment allocation to specific invoices and bills
+  - Auto-generated payment numbers with timestamp integration
+  - Payment type categorization (customer payment, vendor payment)
+  - Quick payment functionality from order/invoice pages
+  - Comprehensive payment history and reference tracking
+  - Automatic balance updates and status changes
+  
 - ✅ **Document Conversion**: SO→Invoice, PO→Bill with complete data transfer
+  - One-click sales order to customer invoice conversion
+  - Complete data transfer including line items and calculations
+  - Purchase order to vendor bill conversion with validation
+  - Maintains original document references and relationships
+  - Automatic status updates and workflow progression
 
 #### **Financial Reporting - 100% Complete**
 - ✅ **Balance Sheet**: Real-time with date filtering and account grouping
+  - Dynamic financial position reporting with date selection
+  - Asset, liability, and equity calculations from live transaction data
+  - Cash position tracking with receivables and payables
+  - Automatic balance calculations with real-time updates
+  - Account grouping by type (assets, liabilities, equity)
+  - Historical balance sheet generation for any date
+  - Drill-down capabilities to underlying transactions
+  
 - ✅ **Profit & Loss**: Period-based with date range filtering
+  - Comprehensive income and expense reporting
+  - Period-based P&L generation with flexible date ranges
+  - Revenue recognition from customer invoices
+  - Cost tracking from vendor bills and purchases
+  - Net profit/loss calculations with variance analysis
+  - Monthly, quarterly, and annual reporting capabilities
+  - Category-wise income and expense breakdown
+  
 - ✅ **Stock Report**: Product quantities, values, and movements
+  - Inventory movement tracking and stock balance monitoring
+  - Product-wise stock analysis with movement history
+  - Stock valuation using purchase price calculations
+  - Quantity tracking with inward/outward movements
+  - Low stock alerts and reorder point management
+  - Product performance analysis and turnover rates
+  
+- ✅ **Partner Ledger**: Individual customer and vendor transaction history
+  - Individual customer and vendor transaction history
+  - Running balance calculations with opening/closing balances
+  - Period-wise transaction filtering with detailed drill-down
+  - Debit/credit transaction categorization
+  - Account reconciliation support with transaction references
+  - Payment history tracking and outstanding balance analysis
+  - Date range filtering for specific period analysis
+  
 - ✅ **Dashboard Analytics**: Role-based KPIs and business metrics
+  - Real-time financial metrics with auto-refresh capabilities
+  - Sales and purchase trend visualization using Recharts
+  - Key performance indicators (KPIs) tracking
+  - Cash flow monitoring and net profit calculations
+  - Recent transaction summaries and pending alerts
+  - Role-based dashboard customization for different user types
+  - Interactive charts and graphs for data visualization
 
 #### **User Management & Security - 100% Complete**
 - ✅ **Authentication**: Token-based with secure login/logout
+  - JWT-style token authentication with secure storage
+  - Email-based login with password validation
+  - Registration workflow with role assignment
+  - Password change functionality with validation
+  - Session management with automatic logout
+  - Profile management with image upload support
+  
 - ✅ **Role-Based Access**: Admin, Invoicing User, Contact with distinct permissions
+  - Three-tier role system with granular permissions
+  - Admin: Full system access including user management
+  - Invoicing User: Transaction and master data access
+  - Contact: Limited access to own records only
+  - Automatic role-based navigation and UI customization
+  - Permission-based API endpoint protection
+  
 - ✅ **User CRUD**: Complete user management interface (Admin only)
+  - User creation with role assignment
+  - Profile management with contact linking
+  - User activation/deactivation capabilities
+  - Password reset functionality for administrators
+  - Group assignment based on roles
+  - User activity monitoring and audit trails
+  
 - ✅ **Data Isolation**: Contact users see only their own records
+  - User-specific data filtering at database level
+  - Contact users isolated to their own invoices/bills
+  - Automatic data scope enforcement via API
+  - Secure data access patterns with user context
+  - Prevention of cross-user data access
+  
 - ✅ **Route Protection**: Role-based navigation and automatic redirects
+  - Protected route implementation with role checking
+  - Automatic redirection based on user permissions
+  - Navigation menu customization by role
+  - Unauthorized access prevention with graceful handling
+  - Session timeout management with re-authentication
 
 #### **Quality Assurance - 100% Complete**
 - ✅ **Form Validation**: Client-side and server-side validation
+  - React Hook Form integration with real-time validation
+  - Django REST Framework serializer validation
+  - Field-level validation with user-friendly error messages
+  - Cross-field validation for business logic enforcement
+  - File upload validation for images and documents
+  - Number format validation for financial fields
+  
 - ✅ **Error Handling**: Comprehensive error messages and user feedback
+  - Toast notification system for all user actions
+  - Detailed error messages with actionable guidance
+  - API error response handling with status codes
+  - Network error handling with retry mechanisms
+  - Graceful degradation for offline scenarios
+  - User-friendly error pages for system errors
+  
 - ✅ **Performance**: Optimized queries, pagination, and caching
+  - React Query implementation for data caching and synchronization
+  - Database query optimization with select_related and prefetch_related
+  - Pagination for large datasets to improve load times
+  - Lazy loading of components and data
+  - Optimistic updates for better user experience
+  - Real-time data updates with background refresh
+  
 - ✅ **Testing**: 25-scenario QA test plan covering all functionality
+  - Comprehensive test scenarios for all user roles
+  - End-to-end workflow testing from order to payment
+  - Role-based access control validation
+  - Data integrity testing for financial calculations
+  - User interface testing across different devices
+  - API endpoint testing with various input scenarios
+  
 - ✅ **Documentation**: Complete technical specs and user guides
+  - Comprehensive project documentation with implementation details
+  - API documentation with endpoint specifications
+  - User guides for each role with workflow explanations
+  - Technical architecture documentation
+  - Database schema documentation with relationships
+  - Setup and deployment guides for different environments
+
+### Enhanced Payment Workflow Integration
+
+#### Conditional Payment Buttons (New Feature)
+The system now includes intelligent payment button visibility based on payment status:
+
+**Purchase Order Payment Integration:**
+- Payment buttons only appear for unpaid purchase orders
+- Payment status calculated from related vendor bills
+- Payment status indicators: 'paid', 'unpaid', 'partial'
+- Direct navigation to payment form with pre-filled data
+- Session storage used for seamless data transfer
+
+**Sales Order Payment Integration:**
+- Similar conditional payment functionality for customer payments
+- Payment status tracking through customer invoices
+- Customer payment type handling with appropriate icons (💰)
+- Pre-filled payment forms for efficient processing
+
+**Payment Status Calculation:**
+```python
+@property
+def is_fully_paid(self):
+    """Check if this purchase order is fully paid via vendor bills"""
+    if not self.vendor_bills.exists():
+        return False
+    
+    total_bill_amount = self.vendor_bills.aggregate(
+        total=models.Sum('grand_total')
+    )['total'] or 0
+    
+    total_paid_amount = self.vendor_bills.aggregate(
+        total=models.Sum('paid_amount')
+    )['total'] or 0
+    
+    return total_paid_amount >= total_bill_amount and total_bill_amount > 0
+```
+
+**Enhanced User Experience:**
+- Automatic scroll to payment form when "New Payment" is clicked
+- Toast notifications for payment workflow guidance
+- Session-based data pre-filling for payment forms
+- Real-time payment status updates across the system
 
 ### Architecture
 - React SPA communicates with Django REST API over JSON.
@@ -212,15 +439,289 @@ The system implements comprehensive role-based access control with three distinc
 - Logout: `POST /api/auth/logout/`
 - Frontend stores token in localStorage and adds header automatically via `services/api.js`.
 
+### Complete API Endpoints Documentation
+
+#### Authentication Endpoints (`/api/auth/`)
+- `POST /api/auth/register/` - User registration → `{ user, token }`
+- `POST /api/auth/login/` - User login → `{ user, token }`
+- `GET /api/auth/profile/` - Get current user profile
+- `PUT /api/auth/profile/update/` - Update user profile
+- `POST /api/auth/change-password/` - Change user password
+- `POST /api/auth/logout/` - User logout (token invalidation)
+- `GET /api/auth/dashboard-data/` - Role-based dashboard data
+
+#### Master Data Endpoints (`/api/master-data/`)
+**Contacts:**
+- `GET /api/master-data/contacts/` - List contacts with filtering
+- `POST /api/master-data/contacts/` - Create new contact
+- `GET /api/master-data/contacts/{id}/` - Get contact details
+- `PUT /api/master-data/contacts/{id}/` - Update contact
+- `DELETE /api/master-data/contacts/{id}/` - Delete contact
+
+**Products:**
+- `GET /api/master-data/products/` - List products with search
+- `POST /api/master-data/products/` - Create new product
+- `GET /api/master-data/products/{id}/` - Get product details
+- `PUT /api/master-data/products/{id}/` - Update product
+- `DELETE /api/master-data/products/{id}/` - Delete product
+
+**Taxes:**
+- `GET /api/master-data/taxes/` - List tax configurations
+- `POST /api/master-data/taxes/` - Create new tax
+- `GET /api/master-data/taxes/{id}/` - Get tax details
+- `PUT /api/master-data/taxes/{id}/` - Update tax
+- `DELETE /api/master-data/taxes/{id}/` - Delete tax
+
+**Chart of Accounts:**
+- `GET /api/master-data/chart-of-accounts/` - List accounts with hierarchy
+- `POST /api/master-data/chart-of-accounts/` - Create new account
+- `GET /api/master-data/chart-of-accounts/{id}/` - Get account details
+- `PUT /api/master-data/chart-of-accounts/{id}/` - Update account
+- `DELETE /api/master-data/chart-of-accounts/{id}/` - Delete account
+
+**HSN Search:**
+- `GET /api/master-data/hsn-search/` - Government GST API proxy
+- `GET /api/master-data/hsn-search/mock/` - Mock HSN data for testing
+- `GET /api/master-data/summary/` - Master data summary statistics
+
+#### Transaction Endpoints (`/api/transactions/`)
+**Purchase Orders:**
+- `GET /api/transactions/purchase-orders/` - List purchase orders
+- `POST /api/transactions/purchase-orders/create-with-items/` - Create PO with line items
+- `GET /api/transactions/purchase-orders/{id}/` - Get PO details
+- `PUT /api/transactions/purchase-orders/{id}/update-with-items/` - Update PO with line items
+- `DELETE /api/transactions/purchase-orders/{id}/` - Delete purchase order
+- `POST /api/transactions/purchase-orders/{id}/convert-to-bill/` - Convert PO to vendor bill
+
+**Sales Orders:**
+- `GET /api/transactions/sales-orders/` - List sales orders
+- `POST /api/transactions/sales-orders/create-with-items/` - Create SO with line items
+- `GET /api/transactions/sales-orders/{id}/` - Get SO details
+- `PUT /api/transactions/sales-orders/{id}/update-with-items/` - Update SO with line items
+- `DELETE /api/transactions/sales-orders/{id}/` - Delete sales order
+- `POST /api/transactions/sales-orders/{id}/convert-to-invoice/` - Convert SO to customer invoice
+
+**Customer Invoices:**
+- `GET /api/transactions/customer-invoices/` - List customer invoices
+- `POST /api/transactions/customer-invoices/create-with-items/` - Create invoice with line items
+- `GET /api/transactions/customer-invoices/{id}/` - Get invoice details
+- `PUT /api/transactions/customer-invoices/{id}/update-with-items/` - Update invoice
+- `DELETE /api/transactions/customer-invoices/{id}/` - Delete invoice
+
+**Vendor Bills:**
+- `GET /api/transactions/vendor-bills/` - List vendor bills
+- `POST /api/transactions/vendor-bills/create-with-items/` - Create bill with line items
+- `GET /api/transactions/vendor-bills/{id}/` - Get bill details
+- `PUT /api/transactions/vendor-bills/{id}/update-with-items/` - Update bill
+- `DELETE /api/transactions/vendor-bills/{id}/` - Delete bill
+
+**Payments:**
+- `GET /api/transactions/payments/` - List payments with filtering
+- `POST /api/transactions/payments/` - Create new payment
+- `GET /api/transactions/payments/{id}/` - Get payment details
+- `PUT /api/transactions/payments/{id}/` - Update payment
+- `DELETE /api/transactions/payments/{id}/` - Delete payment
+- `POST /api/transactions/payments/quick-allocate/` - Quick payment allocation
+- `GET /api/transactions/payments/allocations/{id}/` - Get payment allocations
+
+**Contact-Scoped Endpoints:**
+- `GET /api/transactions/my-invoices/` - Contact user's own invoices
+- `GET /api/transactions/my-bills/` - Contact user's own bills
+- `GET /api/transactions/my-payments/` - Contact user's own payments
+
+#### Reporting Endpoints (`/api/reports/`)
+**Financial Reports:**
+- `GET /api/reports/balance-sheet/` - Generate balance sheet with date filtering
+- `GET /api/reports/profit-loss/` - Generate P&L report with date range
+- `GET /api/reports/partner-ledger/` - Generate partner ledger with filtering
+- `GET /api/reports/dashboard-summary/` - Dashboard summary data
+
+**Stock Management:**
+- `GET /api/reports/stock-movements/` - List stock movements
+- `POST /api/reports/stock-movements/` - Create stock movement
+- `GET /api/reports/stock-balances/` - Get stock balances
+- `GET /api/reports/stock-report/` - Generate stock report
+
 ### Working Modules & Functionalities
-- Master Data
-  - Contact Master: CRUD customers/vendors
-  - Product Master: CRUD products/services with pricing and taxes (HSN, category)
-  - Tax Master: CRUD taxes (percentage/fixed, applicable on sales/purchase/both)
-  - Chart of Accounts: CRUD ledger accounts (types: asset/liability/income/expense/equity)
-- Transactions
-  - Purchase Orders → Convert to Vendor Bills (AP) [POST /api/transactions/purchase-orders/:id/convert-to-bill/]
-  - Sales Orders → Convert to Customer Invoices (AR) [POST /api/transactions/sales-orders/:id/convert-to-invoice/]
+### Complete Frontend Application Structure
+
+#### React Application Components (`frontend/src/`)
+
+**Core Application Files:**
+- `App.js` - Main application with routing configuration
+- `index.js` - Application entry point with React 18 root
+- `index.css` - Global styles with Tailwind CSS configuration
+
+**Authentication & Context:**
+- `contexts/AuthContext.js` - Authentication state management
+- `services/api.js` - Axios configuration and API functions
+- `services/enhancedAPI.js` - Real-time cache invalidation
+- `services/gstAPI.js` - HSN search API integration
+
+**Layout Components (`components/`):**
+- `Layout.js` - Main application layout with header and sidebar
+- `Header.js` - Navigation header with user menu
+- `Sidebar.js` - Role-based navigation sidebar
+- `ProtectedRoute.js` - Route protection with role checking
+- `LineItemsTable.js` - Reusable line items component
+- `AsyncContactSelect.js` - Contact selection with search
+- `HSNSearchInput.js` - HSN code search with autocomplete
+
+**Page Components (`pages/`):**
+
+**Authentication:**
+- `Login.js` - Login and registration form
+- `Profile.js` - User profile management
+
+**Dashboard:**
+- `Dashboard.js` - Admin/Invoicing user dashboard with analytics
+- `InvoicingDashboard.js` - Specialized invoicing dashboard
+- `ContactDashboard.js` - Contact user dashboard
+
+**Master Data (`pages/master-data/`):**
+- `ContactMaster.js` - Customer and vendor management
+- `ProductMaster.js` - Product catalog management
+- `TaxMaster.js` - Tax configuration management
+- `ChartOfAccounts.js` - Financial account management
+
+**Transactions (`pages/transactions/`):**
+- `PurchaseOrder.js` - Purchase order list and management
+- `PurchaseOrderDetail.js` - Purchase order creation/editing
+- `SalesOrder.js` - Sales order list and management
+- `SalesOrderDetail.js` - Sales order creation/editing
+- `CustomerInvoice.js` - Customer invoice list and management
+- `InvoiceDetail.js` - Customer invoice creation/editing
+- `VendorBill.js` - Vendor bill list and management
+- `VendorBillDetail.js` - Vendor bill creation/editing
+- `Payments.js` - Payment processing and management
+
+**Reports (`pages/reports/`):**
+- `BalanceSheet.js` - Financial position reporting
+- `ProfitLoss.js` - Income statement reporting
+- `StockReport.js` - Inventory management reporting
+- `PartnerLedger.js` - Partner transaction history
+
+**Administration (`pages/admin/`):**
+- `UserManagement.js` - User management for admins
+
+**Utilities:**
+- `HSNSearchDemo.js` - HSN search demonstration and testing
+
+#### Frontend Technology Integration
+
+**State Management:**
+- React Query for server state management and caching
+- React Context for authentication state
+- localStorage for token persistence
+- sessionStorage for form data transfer
+
+**UI/UX Features:**
+- Responsive design with Tailwind CSS
+- Toast notifications for user feedback
+- Loading states and error handling
+- Form validation with React Hook Form
+- Smooth scrolling and animations
+- Role-based UI customization
+
+**Data Visualization:**
+- Recharts for dashboard analytics
+- Interactive charts and graphs
+- Real-time data updates
+- Export capabilities for reports
+
+**Advanced Features:**
+- Real-time cache invalidation
+- Optimistic updates
+- Background data refresh
+- Offline functionality fallbacks
+- Progressive enhancement
+
+### Backend Django Application Structure
+
+#### Django Project Configuration (`backend/`)
+
+**Project Settings (`shiv_accounts/`):**
+- `settings.py` - Django configuration with CORS, DRF, and custom user model
+- `urls.py` - Main URL configuration mounting `/api/` routes
+- `wsgi.py` - WSGI application for deployment
+
+**Django Applications:**
+
+**User Management (`accounts/`):**
+- `models.py` - Custom User model with role-based access
+- `serializers.py` - User, registration, login, and profile serializers
+- `views.py` - Authentication views and dashboard data
+- `urls.py` - Authentication endpoints
+- `admin.py` - Django admin customization for users
+
+**Master Data (`master_data/`):**
+- `models.py` - Contact, Product, Tax, and ChartOfAccount models
+- `serializers.py` - CRUD serializers with validation
+- `views.py` - ViewSets for CRUD operations
+- `urls.py` - RESTful endpoints for master data
+- `hsn_views.py` - HSN search integration with Government API
+- `admin.py` - Django admin for master data management
+
+**Transaction Processing (`transactions/`):**
+- `models.py` - PO, SO, Invoice, Bill, Payment, and line item models
+- `serializers.py` - Complex serializers with nested line items
+- `views.py` - Transaction ViewSets with business logic
+- `urls.py` - Transaction endpoints with conversions
+- `admin.py` - Django admin for transaction management
+
+**Reporting (`reports/`):**
+- `models.py` - Stock movement and balance models
+- `serializers.py` - Report data serializers
+- `views.py` - Report generation with complex calculations
+- `urls.py` - Report endpoints
+- `admin.py` - Stock management admin interface
+
+#### Database Architecture
+
+**Core Models and Relationships:**
+
+**User and Authentication:**
+```python
+class User(AbstractUser):
+    email = models.EmailField(unique=True)
+    role = models.CharField(choices=ROLE_CHOICES)
+    mobile = models.CharField(max_length=15)
+    profile_image = models.ImageField(upload_to='profile_images/')
+```
+
+**Master Data Models:**
+```python
+class Contact(models.Model):
+    name = models.CharField(max_length=255)
+    type = models.CharField(choices=TYPE_CHOICES)
+    gst_number = models.CharField(max_length=15)
+    user = models.OneToOneField(User, related_name='contact_profile')
+
+class Product(models.Model):
+    name = models.CharField(max_length=255)
+    type = models.CharField(choices=TYPE_CHOICES)
+    hsn_code = models.CharField(max_length=20)
+    sales_price = models.DecimalField(max_digits=10, decimal_places=2)
+```
+
+**Transaction Models with Payment Integration:**
+```python
+class PurchaseOrder(models.Model):
+    po_number = models.CharField(max_length=50, unique=True)
+    vendor = models.ForeignKey(Contact, related_name='purchase_orders')
+    status = models.CharField(choices=STATUS_CHOICES)
+    
+    @property
+    def is_fully_paid(self):
+        # Payment status calculation from vendor bills
+        
+class Payment(models.Model):
+    payment_type = models.CharField(choices=PAYMENT_TYPE_CHOICES)
+    contact = models.ForeignKey(Contact, related_name='payments')
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
+```
+
+### Working Modules & Functionalities
   - Payments: Record/allocate payments; Quick Allocate API for invoice/bill settlement
 - Reports
   - Balance Sheet, Profit & Loss

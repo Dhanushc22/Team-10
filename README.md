@@ -5,23 +5,114 @@ A comprehensive cloud-based accounting system for Shiv Furniture that enables en
 ## Features
 
 ### Master Data Management
-- **Contact Master**: Manage customers and vendors with complete contact information
-- **Product Master**: Handle products and services with pricing and tax information
-- **Tax Master**: Define GST rates and tax configurations
-- **Chart of Accounts**: Set up ledger accounts for proper financial reporting
+- **Contact Management**: 
+  - Customer and vendor profiles with comprehensive contact information
+  - GST registration number tracking and validation
+  - Profile image uploads and contact categorization
+  - Address management with city, state, and pincode
+  - User-linked contacts for role-based access
+  - Active/inactive status management
+  
+- **Product Catalog**: 
+  - Goods and services classification with type management
+  - HSN code integration with automatic GST rate lookup
+  - Separate sales and purchase pricing with tax configuration
+  - Product categorization and detailed descriptions
+  - Active/inactive product status tracking
+  - Purchase and sale tax percentage configuration
+  
+- **Tax Management**: 
+  - GST and custom tax configurations with flexible computation methods
+  - Percentage-based and fixed-value tax calculations
+  - Sales, purchase, or both applicable tax settings
+  - Comprehensive tax descriptions and active status management
+  
+- **Chart of Accounts**: 
+  - Complete hierarchical accounting structure with parent-child relationships
+  - Asset, liability, expense, income, and equity account types
+  - Account codes for systematic organization
+  - Opening and current balance tracking
+  - Full account name hierarchy generation
+
+- **HSN Search Integration**:
+  - Real-time HSN code lookup via Government GST API
+  - Comprehensive furniture business HSN database with 200+ codes
+  - Search by HSN code, product description, or service type
+  - Intelligent search with category-specific suggestions
+  - Mock data fallback for offline functionality
+  - Service Accounting Code (SAC) support for services
 
 ### Transaction Management
-- **Purchase Orders**: Create and manage purchase orders for vendors
-- **Vendor Bills**: Convert purchase orders to bills and track payments
-- **Sales Orders**: Create and manage sales orders for customers
-- **Customer Invoices**: Generate invoices from sales orders
-- **Payments**: Record payments for both customers and vendors
+- **Purchase Orders**: 
+  - Complete purchase order lifecycle management
+  - Vendor selection with automatic contact integration
+  - Line item management with product, quantity, and pricing
+  - Tax calculations with HSN-based rate application
+  - Order status tracking (draft, sent, received, cancelled)
+  - Payment status integration with conditional payment buttons
+  - Automatic subtotal, tax, and grand total calculations
+  
+- **Vendor Bills**: 
+  - Purchase order linked bill generation
+  - Due date management and status tracking
+  - Automatic payment status calculation (pending, paid, overdue)
+  - Balance due calculations with paid amount tracking
+  - Bill approval workflow and vendor payment processing
+  
+- **Sales Orders**: 
+  - Customer order management with delivery date tracking
+  - Product line items with tax calculations
+  - Order status management (draft, confirmed, delivered, cancelled)
+  - Payment tracking integration with customer invoice linking
+  - Payment status monitoring with conditional payment buttons
+  
+- **Customer Invoices**: 
+  - Sales order to invoice conversion
+  - Customer payment tracking with balance due calculations
+  - Invoice status management (pending, paid, overdue, cancelled)
+  - Reference number tracking and detailed invoice generation
+  
+- **Payments System**: 
+  - Unified payment processing for both customers and vendors
+  - Multiple payment methods (cash, bank, cheque, online)
+  - Payment allocation to specific invoices and bills
+  - Auto-generated payment numbers with timestamp integration
+  - Payment type categorization (customer payment, vendor payment)
+  - Comprehensive payment history and reference tracking
 
-### Reporting System
-- **Balance Sheet**: Real-time snapshot of assets, liabilities, and equity
-- **Profit & Loss**: Income and expense tracking with net profit calculation
-- **Stock Report**: Inventory levels and stock movement tracking
-- **Partner Ledger**: Detailed transaction history with customers and vendors
+### Reporting & Analytics
+- **Dashboard Analytics**: 
+  - Real-time financial metrics with auto-refresh
+  - Sales and purchase trend visualization using Recharts
+  - Key performance indicators (KPIs) tracking
+  - Cash flow monitoring and net profit calculations
+  - Recent transaction summaries and alerts
+  
+- **Balance Sheet**: 
+  - Dynamic financial position reporting with date selection
+  - Asset, liability, and equity calculations from live transaction data
+  - Cash position tracking with receivables and payables
+  - Automatic balance calculations with real-time updates
+  
+- **Profit & Loss**: 
+  - Comprehensive income and expense reporting
+  - Period-based P&L generation with date range selection
+  - Revenue recognition from customer invoices
+  - Cost tracking from vendor bills and purchases
+  - Net profit/loss calculations with variance analysis
+  
+- **Stock Reports**: 
+  - Inventory movement tracking and stock balance monitoring
+  - Product-wise stock analysis with movement history
+  - Stock valuation and quantity tracking
+  - Low stock alerts and reorder point management
+  
+- **Partner Ledger**: 
+  - Individual customer and vendor transaction history
+  - Running balance calculations with opening/closing balances
+  - Period-wise transaction filtering with detailed drill-down
+  - Debit/credit transaction categorization
+  - Account reconciliation support with transaction references
 
 ### User Management
 - **Admin**: Full access to all features including master data management
