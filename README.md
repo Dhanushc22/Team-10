@@ -1,6 +1,6 @@
 # Shiv Accounts Cloud
 
-A comprehensive cloud-based accounting system for Shiv Furniture that enables entry of core master data, smooth recording of sales, purchases, and payments, and automated generation of financial and stock reports.
+A comprehensive cloud-based accounting system for Shiv Furniture that enables entry of core master data, smooth recording of sales, purchases, and payments, and automated generation of financial and stock reports. 
 
 ## Features
 
