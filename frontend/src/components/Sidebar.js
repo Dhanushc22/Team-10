@@ -89,6 +89,7 @@ const Sidebar = () => {
     ]},
     { name: 'Utilities', href: '#', icon: Settings, children: [
       { name: 'HSN Search', href: '/utilities/hsn-search', icon: Search },
+      { name: 'HSN API Test', href: '/utilities/hsn-api-test', icon: Search },
     ]},
   ];
 

@@ -8,6 +8,68 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+def get_gst_rate_for_code(hsn_code):
+    """
+    Get GST rate for common HSN codes.
+    This is a simplified mapping - in production, you might want to
+    fetch this from a database or a more comprehensive API.
+    """
+    # Common furniture and related HSN codes with their GST rates
+    gst_rates = {
+        '9401': '12',  # Seats/chairs
+        '940140': '12',  # Seats convertible into beds
+        '940161': '12',  # Other seats with wooden frames
+        '940169': '12',  # Other seats with other frames
+        '9402': '12',  # Medical/dental/surgical furniture
+        '9403': '12',  # Other furniture
+        '940310': '12',  # Metal furniture for offices
+        '940320': '12',  # Other metal furniture
+        '940330': '12',  # Wooden furniture for offices
+        '940340': '12',  # Wooden furniture for kitchen
+        '940350': '12',  # Wooden furniture for bedroom
+        '940360': '12',  # Other wooden furniture
+        '940370': '12',  # Furniture of plastics
+        '9404': '12',  # Mattresses, pillows, etc.
+        '4409': '5',   # Wood strips
+        '4412': '12',  # Plywood
+        '4418': '12',  # Wooden carpentry
+        '8302': '18',  # Metal mountings/fittings
+        '830242': '18', # Furniture fittings
+        '7318': '18',  # Screws, bolts, nuts
+        '9997': '5',   # Transport services (first 4 digits)
+        '9972': '18',  # Installation services
+        '9983': '18',  # Design services
+    }
+    
+    # Check exact match first
+    if hsn_code in gst_rates:
+        return gst_rates[hsn_code]
+    
+    # Check by prefix (first 4 digits)
+    if len(hsn_code) >= 4:
+        prefix = hsn_code[:4]
+        if prefix in gst_rates:
+            return gst_rates[prefix]
+    
+    # Check by first 6 digits for more specific codes
+    if len(hsn_code) >= 6:
+        prefix = hsn_code[:6]
+        if prefix in gst_rates:
+            return gst_rates[prefix]
+    
+    # Default rates by category
+    if hsn_code.startswith('94'):  # Furniture category
+        return '12'
+    elif hsn_code.startswith('44'):  # Wood category
+        return '12'
+    elif hsn_code.startswith('83'):  # Metal fittings
+        return '18'
+    elif hsn_code.startswith('999'):  # Services
+        return '18'
+    
+    # Default if unknown
+    return '18'
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def search_hsn_codes(request):
@@ -26,8 +88,16 @@ def search_hsn_codes(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # GST API endpoint
-        gst_api_url = 'https://services.gst.gov.in/commonservices/hsn/search/q'
+        # Basic validation to match GST API requirements
+        # Require at least 3 characters to prevent 400 from upstream
+        if len(input_text.strip()) < 3:
+            return Response(
+                {'error': 'inputText must be at least 3 characters'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # GST API endpoint - Updated to working endpoint
+        gst_api_url = 'https://services.gst.gov.in/commonservices/hsn/search/qsearch'
         
         # Parameters for GST API
         params = {
@@ -36,13 +106,11 @@ def search_hsn_codes(request):
             'category': category
         }
         
-        # Headers to mimic a browser request
+        # Headers to mimic a browser request - simplified since basic request works
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'application/json, text/plain, */*',
             'Accept-Language': 'en-US,en;q=0.9',
-            'Referer': 'https://services.gst.gov.in/',
-            'Origin': 'https://services.gst.gov.in'
         }
         
         # Make request to GST API with timeout
@@ -50,7 +118,7 @@ def search_hsn_codes(request):
             gst_api_url, 
             params=params, 
             headers=headers, 
-            timeout=10,
+            timeout=15,  # Increased timeout
             verify=True
         )
         
@@ -58,7 +126,26 @@ def search_hsn_codes(request):
         if response.status_code == 200:
             try:
                 data = response.json()
-                return Response(data, status=status.HTTP_200_OK)
+                
+                # Transform the API response to match frontend expectations
+                if 'data' in data and isinstance(data['data'], list):
+                    transformed_data = []
+                    for item in data['data']:
+                        # Transform the response format
+                        transformed_item = {
+                            'hsn_code': item.get('c', ''),
+                            'description': item.get('n', ''),
+                            # GST rate would need to be fetched separately or from a mapping
+                            # For now, we'll use a basic mapping for common codes
+                            'gst_rate': get_gst_rate_for_code(item.get('c', ''))
+                        }
+                        transformed_data.append(transformed_item)
+                    
+                    return Response(transformed_data, status=status.HTTP_200_OK)
+                else:
+                    # Return raw data if structure is unexpected
+                    return Response(data, status=status.HTTP_200_OK)
+                    
             except ValueError:
                 # If response is not JSON, return as text
                 return Response(

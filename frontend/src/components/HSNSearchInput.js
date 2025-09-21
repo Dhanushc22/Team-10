@@ -32,7 +32,9 @@ const HSNSearchInput = ({
 
   // Search function with debouncing
   const performSearch = async (text) => {
-    if (!text || text.length < 2) {
+    const isNumeric = /^\d+$/.test(text);
+    const minLen = isNumeric ? 2 : 3;
+    if (!text || text.length < minLen) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
@@ -42,9 +44,14 @@ const HSNSearchInput = ({
     setError('');
 
     try {
+      // Try to use real API first
       const response = await gstAPI.search(text, type);
       
       if (response.data && Array.isArray(response.data)) {
+        // Check if this is fallback data
+        if (response.isFallback) {
+          setError('Using offline data - HSN API temporarily unavailable');
+        }
         setSuggestions(response.data);
         setShowSuggestions(true);
       } else {
@@ -53,9 +60,24 @@ const HSNSearchInput = ({
       }
     } catch (err) {
       console.error('HSN Search Error:', err);
-      setError('Failed to search HSN codes. Please try again.');
-      setSuggestions([]);
-      setShowSuggestions(false);
+      
+      // Try fallback data if API fails
+      try {
+        const fallbackResponse = await gstAPI.searchWithFallback(text, type);
+        if (fallbackResponse.data && Array.isArray(fallbackResponse.data)) {
+          setSuggestions(fallbackResponse.data);
+          setShowSuggestions(true);
+          setError('Using offline data - HSN API temporarily unavailable');
+        } else {
+          setSuggestions([]);
+          setShowSuggestions(false);
+          setError('Failed to search HSN codes.');
+        }
+      } catch (fallbackErr) {
+        setError('Failed to search HSN codes. Please try again.');
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
     } finally {
       setIsLoading(false);
     }

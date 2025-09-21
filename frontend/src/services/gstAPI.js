@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Backend HSN Search API (proxied through our Django backend)
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
 
 class GSTSearchAPI {
   constructor() {
@@ -16,9 +16,10 @@ class GSTSearchAPI {
 
     // Add auth token to requests
     this.api.interceptors.request.use((config) => {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem('token');
       if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+        // DRF Token Authentication
+        config.headers.Authorization = `Token ${token}`;
       }
       return config;
     });
@@ -302,12 +303,27 @@ class GSTSearchAPI {
   }
 
   /**
+   * Test if the real HSN API is working
+   * @returns {Promise<boolean>} True if API is working
+   */
+  async testHSNAPI() {
+    try {
+      const response = await this.searchByCode('9403');
+      return response && response.data && response.status === 200;
+    } catch (error) {
+      console.error('HSN API test failed:', error.message);
+      return false;
+    }
+  }
+
+  /**
    * Generic search function that determines search type based on input
    * @param {string} searchText - Text to search for
    * @param {string} type - 'product', 'service', or 'code'
+   * @param {boolean} useFallback - Whether to use fallback data on API failure (default: false)
    * @returns {Promise} API response with HSN suggestions
    */
-  async search(searchText, type = 'code') {
+  async search(searchText, type = 'code', useFallback = false) {
     try {
       const isNumeric = /^\d+$/.test(searchText);
       let response;
@@ -320,19 +336,47 @@ class GSTSearchAPI {
         response = await this.searchByProductDescription(searchText);
       }
       
-      return response;
-    } catch (error) {
-      // Fallback to mock data if backend API fails
-      console.warn('Backend HSN API failed, using mock data:', error.message);
-      const mockResults = this.getMockData(searchText, type);
+      // If we get a successful response, return it
+      if (response && response.data) {
+        console.log('Using real HSN API data');
+        return response;
+      }
       
-      // Return in same format as axios response
-      return {
-        data: mockResults,
-        status: 200,
-        statusText: 'OK (Mock Data)'
-      };
+      throw new Error('No data received from HSN API');
+      
+    } catch (error) {
+      console.error('HSN API Error:', error.message);
+      
+      // Log the error for debugging
+      if (error.response) {
+        console.error('API Response Error:', error.response.status, error.response.data);
+      }
+      
+      // Only use fallback if explicitly requested
+      if (useFallback) {
+        console.warn('Using fallback HSN data as requested');
+        const mockResults = this.getMockData(searchText, type);
+        
+        // Return in same format as axios response
+        return {
+          data: mockResults,
+          status: 200,
+          statusText: 'OK (Fallback Data)',
+          isFallback: true
+        };
+      }
+      
+      // Re-throw the error so the component can handle it
+      throw error;
     }
+  }
+
+  /**
+   * Search with automatic fallback to mock data
+   * Use this only when you want to ensure results even if API fails
+   */
+  async searchWithFallback(searchText, type = 'code') {
+    return this.search(searchText, type, true);
   }
 }
 

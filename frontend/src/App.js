@@ -29,6 +29,7 @@ import UserManagement from './pages/admin/UserManagement';
 import Profile from './pages/Profile';
 import InvoiceDetail from './pages/transactions/InvoiceDetail';
 import HSNSearchDemo from './pages/HSNSearchDemo';
+import HSNAPITest from './pages/HSNAPITest';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -114,6 +115,7 @@ function App() {
                 
                 {/* Utilities */}
                 <Route path="utilities/hsn-search" element={<HSNSearchDemo />} />
+                <Route path="utilities/hsn-api-test" element={<HSNAPITest />} />
                 
                 {/* Contact User Routes */}
                 <Route path="contact-dashboard" element={<ContactDashboard />} />
