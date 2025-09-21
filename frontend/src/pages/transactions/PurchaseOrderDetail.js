@@ -1,11 +1,43 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
-import { useQuery } from 'react-query';
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { transactionsAPI } from '../../services/api';
 
 const PurchaseOrderDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [converting, setConverting] = useState(false);
+  
   const { data, isLoading, error } = useQuery(['purchase-order', id], () => transactionsAPI.getPurchaseOrder(id).then(r => r.data));
+
+  // Mutation for converting PO to Bill
+  const convertToBillMutation = useMutation(
+    () => transactionsAPI.convertPurchaseOrderToBill(id),
+    {
+      onSuccess: (response) => {
+        queryClient.invalidateQueries('vendor-bills');
+        queryClient.invalidateQueries(['purchase-order', id]);
+        alert('Purchase Order successfully converted to Vendor Bill!');
+        // Navigate to the created bill
+        navigate(`/transactions/vendor-bills/${response.data.id}`);
+      },
+      onError: (error) => {
+        console.error('Conversion failed:', error);
+        alert('Failed to convert Purchase Order to Bill. Please try again.');
+      },
+      onSettled: () => {
+        setConverting(false);
+      }
+    }
+  );
+
+  const handleConvertToBill = () => {
+    if (window.confirm('Are you sure you want to convert this Purchase Order to a Vendor Bill?')) {
+      setConverting(true);
+      convertToBillMutation.mutate();
+    }
+  };
 
   // Helper function to safely format numbers
   const formatCurrency = (value) => {
@@ -185,8 +217,18 @@ const PurchaseOrderDetail = () => {
         >
           Print PO
         </button>
+        
+        {/* Convert to Bill Button */}
         <button 
-          onClick={() => window.history.back()} 
+          onClick={handleConvertToBill}
+          disabled={converting}
+          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed transition-colors"
+        >
+          {converting ? 'Converting...' : 'Convert to Bill'}
+        </button>
+        
+        <button 
+          onClick={() => navigate('/transactions/purchase-orders')} 
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
         >
           Back to Purchase Orders
