@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useNavigate } from 'react-router-dom';
 import { transactionsAPI } from '../../services/api';
 import { toast } from 'react-hot-toast';
 import LineItemsTable from '../../components/LineItemsTable';
@@ -7,6 +8,7 @@ import AsyncContactSelect from '../../components/AsyncContactSelect';
 
 const PurchaseOrder = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { data: poData } = useQuery('purchase-orders', () => transactionsAPI.getPurchaseOrders().then(r => r.data));
   const convertMutation = useMutation((id) => transactionsAPI.convertPurchaseOrderToBill(id), {
     onSuccess: () => {
@@ -15,6 +17,25 @@ const PurchaseOrder = () => {
     },
     onError: () => toast.error('Conversion failed')
   });
+
+  // Function to handle payment creation from purchase order
+  const handleCreatePayment = (po) => {
+    // Navigate to payments page with pre-filled data
+    const paymentData = {
+      mode: 'vendor_payment',
+      contactId: po.vendor || po.vendor_id,
+      reference: `Payment for PO ${po.po_number}`,
+      notes: `Payment for Purchase Order ${po.po_number}`,
+      amount: po.grand_total,
+      vendor_name: po.vendor_name || po.vendor?.name
+    };
+    
+    // Store data in sessionStorage for the payment page to pick up
+    sessionStorage.setItem('prefillPaymentData', JSON.stringify(paymentData));
+    
+    // Navigate to payments page
+    navigate('/transactions/payments?from=purchase-order');
+  };
 
   const [showForm, setShowForm] = useState(false);
   // Set today's date as default for PO date
@@ -174,6 +195,7 @@ const PurchaseOrder = () => {
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">PO #</th>
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Vendor</th>
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Payment Status</th>
               <th className="px-4 py-2"></th>
             </tr>
           </thead>
@@ -185,8 +207,32 @@ const PurchaseOrder = () => {
                   {po.vendor_name || po.vendor?.name || `Vendor ID: ${po.vendor}`}
                 </td>
                 <td className="px-4 py-2">₹{po.grand_total}</td>
+                <td className="px-4 py-2">
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    po.payment_status === 'paid' ? 'bg-green-100 text-green-800' :
+                    po.payment_status === 'partial' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {po.payment_status === 'paid' ? '✅ Paid' :
+                     po.payment_status === 'partial' ? '🔄 Partial' :
+                     '❌ Unpaid'}
+                  </span>
+                </td>
                 <td className="px-4 py-2 text-right space-x-2">
                   <a href={`/transactions/purchase-orders/${po.id}`} className="px-3 py-1 bg-gray-100 rounded-md text-sm">View</a>
+                  
+                  {/* Payment Button - Only show for unpaid POs */}
+                  {!po.is_fully_paid && (
+                    <button 
+                      onClick={() => handleCreatePayment(po)} 
+                      className="px-3 py-1 bg-green-600 text-white rounded-md text-sm hover:bg-green-700 transition-colors duration-200"
+                      title={`Create payment for ${po.vendor_name || 'vendor'} - ₹${po.grand_total}`}
+                    >
+                      💳 Pay
+                    </button>
+                  )}
+                  
+                  {/* Convert to Bill Button */}
                   {!po.has_vendor_bills ? (
                     <button 
                       onClick={() => convertMutation.mutate(po.id)} 
@@ -196,7 +242,7 @@ const PurchaseOrder = () => {
                       {convertMutation.isLoading ? 'Converting...' : 'Convert to Bill'}
                     </button>
                   ) : (
-                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-md text-sm">
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-md text-sm">
                       Converted
                     </span>
                   )}

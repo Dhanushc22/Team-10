@@ -160,10 +160,13 @@ class PurchaseOrderListSerializer(serializers.ModelSerializer):
     """Simplified serializer for Purchase Order lists"""
     vendor_name = serializers.CharField(source='vendor.name', read_only=True)
     has_vendor_bills = serializers.SerializerMethodField()
+    is_fully_paid = serializers.ReadOnlyField()
+    payment_status = serializers.ReadOnlyField()
     
     class Meta:
         model = PurchaseOrder
-        fields = ['id', 'po_number', 'po_date', 'vendor_name', 'status', 'grand_total', 'has_vendor_bills']
+        fields = ['id', 'po_number', 'po_date', 'vendor_name', 'status', 'grand_total', 
+                 'has_vendor_bills', 'is_fully_paid', 'payment_status']
     
     def get_has_vendor_bills(self, obj):
         """Check if this PO has been converted to vendor bills"""
@@ -183,10 +186,13 @@ class SalesOrderListSerializer(serializers.ModelSerializer):
     """Simplified serializer for Sales Order lists"""
     customer_name = serializers.CharField(source='customer.name', read_only=True)
     has_customer_invoices = serializers.SerializerMethodField()
+    is_fully_paid = serializers.ReadOnlyField()
+    payment_status = serializers.ReadOnlyField()
     
     class Meta:
         model = SalesOrder
-        fields = ['id', 'so_number', 'so_date', 'customer_name', 'status', 'grand_total', 'has_customer_invoices']
+        fields = ['id', 'so_number', 'so_date', 'customer_name', 'status', 'grand_total', 
+                 'has_customer_invoices', 'is_fully_paid', 'payment_status']
     
     def get_has_customer_invoices(self, obj):
         """Check if this SO has been converted to customer invoices"""

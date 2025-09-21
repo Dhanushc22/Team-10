@@ -32,6 +32,39 @@ class PurchaseOrder(models.Model):
     
     def __str__(self):
         return f"PO-{self.po_number} - {self.vendor.name}"
+    
+    @property
+    def is_fully_paid(self):
+        """Check if this purchase order is fully paid via vendor bills"""
+        # If no vendor bills exist, it's not paid
+        if not self.vendor_bills.exists():
+            return False
+        
+        # Calculate total paid amount from all related vendor bills
+        total_bill_amount = self.vendor_bills.aggregate(
+            total=models.Sum('grand_total')
+        )['total'] or 0
+        
+        total_paid_amount = self.vendor_bills.aggregate(
+            total=models.Sum('paid_amount')
+        )['total'] or 0
+        
+        # Check if all bills are paid (paid amount >= bill amount)
+        return total_paid_amount >= total_bill_amount and total_bill_amount > 0
+    
+    @property 
+    def payment_status(self):
+        """Get payment status string"""
+        if not self.vendor_bills.exists():
+            return 'unpaid'
+        elif self.is_fully_paid:
+            return 'paid'
+        else:
+            # Check if partially paid
+            total_paid = self.vendor_bills.aggregate(
+                total=models.Sum('paid_amount')
+            )['total'] or 0
+            return 'partial' if total_paid > 0 else 'unpaid'
 
 
 class PurchaseOrderItem(models.Model):
@@ -144,6 +177,39 @@ class SalesOrder(models.Model):
     
     def __str__(self):
         return f"SO-{self.so_number} - {self.customer.name}"
+    
+    @property
+    def is_fully_paid(self):
+        """Check if this sales order is fully paid via customer invoices"""
+        # If no customer invoices exist, it's not paid
+        if not self.customer_invoices.exists():
+            return False
+        
+        # Calculate total paid amount from all related customer invoices
+        total_invoice_amount = self.customer_invoices.aggregate(
+            total=models.Sum('grand_total')
+        )['total'] or 0
+        
+        total_paid_amount = self.customer_invoices.aggregate(
+            total=models.Sum('paid_amount')
+        )['total'] or 0
+        
+        # Check if all invoices are paid (paid amount >= invoice amount)
+        return total_paid_amount >= total_invoice_amount and total_invoice_amount > 0
+    
+    @property 
+    def payment_status(self):
+        """Get payment status string"""
+        if not self.customer_invoices.exists():
+            return 'unpaid'
+        elif self.is_fully_paid:
+            return 'paid'
+        else:
+            # Check if partially paid
+            total_paid = self.customer_invoices.aggregate(
+                total=models.Sum('paid_amount')
+            )['total'] or 0
+            return 'partial' if total_paid > 0 else 'unpaid'
 
 
 class SalesOrderItem(models.Model):

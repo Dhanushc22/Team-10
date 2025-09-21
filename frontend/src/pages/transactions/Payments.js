@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { transactionsAPI, masterDataAPI } from '../../services/api';
 import { toast } from 'react-hot-toast';
 
 const Payments = () => {
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { data: paymentData, isLoading: paymentsLoading } = useQuery('payments', () => transactionsAPI.getPayments().then(r => r.data));
   const { data: invData } = useQuery('customer-invoices', () => transactionsAPI.getCustomerInvoices().then(r => r.data));
   const { data: billData } = useQuery('vendor-bills', () => transactionsAPI.getVendorBills().then(r => r.data));
@@ -18,6 +21,39 @@ const Payments = () => {
   const [reference, setReference] = useState('');
   const [notes, setNotes] = useState('');
   const [rows, setRows] = useState([]); // {target_type:'invoice'|'bill', target_id, amount}
+
+  // Handle pre-filled data from purchase order or sales order navigation
+  useEffect(() => {
+    const fromPurchaseOrder = searchParams.get('from') === 'purchase-order';
+    const fromSalesOrder = searchParams.get('from') === 'sales-order';
+    
+    if (fromPurchaseOrder || fromSalesOrder) {
+      const prefillData = sessionStorage.getItem('prefillPaymentData');
+      if (prefillData) {
+        try {
+          const data = JSON.parse(prefillData);
+          setMode(data.mode || 'vendor_payment');
+          setContactId(data.contactId || '');
+          setReference(data.reference || '');
+          setNotes(data.notes || '');
+          setShowForm(true); // Auto-open the form
+          
+          // Clear the session storage after using
+          sessionStorage.removeItem('prefillPaymentData');
+          
+          // Show a helpful message
+          const sourceName = fromPurchaseOrder ? 'purchase order' : 'sales order';
+          const contactName = data.vendor_name || data.customer_name;
+          toast.success(`Payment form pre-filled from ${sourceName}. Contact: ${contactName}`, {
+            duration: 4000,
+            icon: fromPurchaseOrder ? '💳' : '💰'
+          });
+        } catch (error) {
+          console.error('Error parsing prefill data:', error);
+        }
+      }
+    }
+  }, [searchParams]);
 
   const addRow = (row) => setRows([...rows, row]);
   const removeRow = (idx) => setRows(rows.filter((_, i)=>i!==idx));
@@ -173,7 +209,15 @@ const Payments = () => {
       {showForm && (
         <div className="card p-6 space-y-6">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-gray-900">Record New Payment</h3>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Record New Payment</h3>
+              {((searchParams.get('from') === 'purchase-order' && reference.includes('PO')) ||
+                (searchParams.get('from') === 'sales-order' && reference.includes('SO'))) && (
+                <p className="text-sm text-green-600 mt-1">
+                  {searchParams.get('from') === 'purchase-order' ? '💳 Pre-filled from Purchase Order' : '💰 Pre-filled from Sales Order'}
+                </p>
+              )}
+            </div>
             <button 
               className="text-gray-400 hover:text-gray-600"
               onClick={() => {setShowForm(false); setRows([]); setContactId(''); setReference(''); setNotes('');}}
