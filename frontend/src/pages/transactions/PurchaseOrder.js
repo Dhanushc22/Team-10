@@ -187,7 +187,19 @@ const PurchaseOrder = () => {
                 <td className="px-4 py-2">₹{po.grand_total}</td>
                 <td className="px-4 py-2 text-right space-x-2">
                   <a href={`/transactions/purchase-orders/${po.id}`} className="px-3 py-1 bg-gray-100 rounded-md text-sm">View</a>
-                  <button onClick={() => convertMutation.mutate(po.id)} className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm">Convert to Bill</button>
+                  {!po.has_vendor_bills ? (
+                    <button 
+                      onClick={() => convertMutation.mutate(po.id)} 
+                      className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+                      disabled={convertMutation.isLoading}
+                    >
+                      {convertMutation.isLoading ? 'Converting...' : 'Convert to Bill'}
+                    </button>
+                  ) : (
+                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-md text-sm">
+                      Converted
+                    </span>
+                  )}
                 </td>
               </tr>
             ))}

@@ -5,116 +5,375 @@ import { toast } from 'react-hot-toast';
 
 const Payments = () => {
   const queryClient = useQueryClient();
+  const { data: paymentData, isLoading: paymentsLoading } = useQuery('payments', () => transactionsAPI.getPayments().then(r => r.data));
   const { data: invData } = useQuery('customer-invoices', () => transactionsAPI.getCustomerInvoices().then(r => r.data));
   const { data: billData } = useQuery('vendor-bills', () => transactionsAPI.getVendorBills().then(r => r.data));
 
+  const [showForm, setShowForm] = useState(false);
   const [mode, setMode] = useState('customer_payment');
   const [contactId, setContactId] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [reference, setReference] = useState('');
   const [rows, setRows] = useState([]); // {target_type:'invoice'|'bill', target_id, amount}
 
   const addRow = (row) => setRows([...rows, row]);
   const removeRow = (idx) => setRows(rows.filter((_, i)=>i!==idx));
   const updateRow = (idx, key, value) => { const next=[...rows]; next[idx] = { ...next[idx], [key]: value }; setRows(next); };
 
+  // Enhanced payment creation that creates a proper payment record with allocations
   const createPayment = useMutation(async () => {
-    // Create one payment and multiple allocations by repeated quick calls (prototype)
+    if (!rows.length) {
+      throw new Error('Add at least one payment allocation');
+    }
+    
+    // Calculate total amount
+    const totalAmount = rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+    
+    if (totalAmount <= 0) {
+      throw new Error('Total payment amount must be greater than 0');
+    }
+
+    // Create the main payment record
+    const paymentData = {
+      payment_type: mode,
+      contact_id: contactId,
+      payment_date: date,
+      payment_method: paymentMethod,
+      amount: totalAmount,
+      reference: reference
+    };
+
+    const paymentResponse = await transactionsAPI.createPayment(paymentData);
+    const paymentId = paymentResponse.data.id;
+
+    // Create allocations for each row
     for (const r of rows) {
       if (!r.target_id || Number(r.amount) <= 0) continue;
-      await transactionsAPI.quickAllocatePayment({ target_type: r.target_type, target_id: r.target_id, amount: Number(r.amount), payment_method: paymentMethod });
+      await transactionsAPI.quickAllocatePayment({ 
+        target_type: r.target_type, 
+        target_id: r.target_id, 
+        amount: Number(r.amount), 
+        payment_method: paymentMethod 
+      });
     }
+    
+    return paymentResponse;
   }, {
-    onSuccess: () => { toast.success('Payment allocations recorded'); setRows([]); queryClient.invalidateQueries('customer-invoices'); queryClient.invalidateQueries('vendor-bills'); },
-    onError: () => toast.error('Failed to allocate payments')
+    onSuccess: () => { 
+      toast.success('Payment recorded successfully'); 
+      setRows([]); 
+      setContactId('');
+      setReference('');
+      setShowForm(false);
+      queryClient.invalidateQueries('payments');
+      queryClient.invalidateQueries('customer-invoices'); 
+      queryClient.invalidateQueries('vendor-bills'); 
+    },
+    onError: (error) => toast.error(error.message || 'Failed to record payment')
   });
+
+  // Helper function to format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 2
+    }).format(amount || 0);
+  };
+
+  const totalAllocation = rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Payments</h1>
-        <p className="text-gray-600">Record and allocate multiple payments in one go (prototype)</p>
-      </div>
-      
-      <div className="card p-6 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <select className="input" value={mode} onChange={(e)=>setMode(e.target.value)}>
-            <option value="customer_payment">Customer Payment</option>
-            <option value="vendor_payment">Vendor Payment</option>
-          </select>
-          <input className="input" placeholder="Contact ID" value={contactId} onChange={(e)=>setContactId(e.target.value)} />
-          <select className="input" value={paymentMethod} onChange={(e)=>setPaymentMethod(e.target.value)}>
-            <option value="cash">Cash</option>
-            <option value="bank">Bank</option>
-            <option value="cheque">Cheque</option>
-            <option value="online">Online</option>
-          </select>
-          <input className="input" type="date" value={date} onChange={(e)=>setDate(e.target.value)} />
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Payments</h1>
+          <p className="text-gray-600">Record and manage customer and vendor payments</p>
         </div>
+        <button 
+          className="btn btn-primary"
+          onClick={() => setShowForm(true)}
+        >
+          New Payment
+        </button>
+      </div>
 
-        <div className="overflow-x-auto">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Reference</th>
-                <th>Balance</th>
-                <th>Allocate</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r, idx) => (
-                <tr key={idx}>
-                  <td>{r.target_type}</td>
-                  <td>{r.ref || r.target_id}</td>
-                  <td>{r.balance ?? '-'}</td>
-                  <td><input type="number" step="0.01" className="input w-28" value={r.amount} onChange={(e)=>updateRow(idx,'amount',e.target.value)} /></td>
-                  <td><button className="text-red-600" onClick={()=>removeRow(idx)}>Remove</button></td>
+      {/* Existing Payments List */}
+      <div className="card p-0 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Payment History</h3>
+        </div>
+        {paymentsLoading ? (
+          <div className="p-6 text-center">Loading payments...</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment #</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-semibold mb-2">Pending Invoices</h4>
-            <div className="max-h-64 overflow-auto border rounded">
-              {(invData?.results || invData || []).filter((i)=>Number(i.balance_due)>0).map(inv => (
-                <div key={inv.id} className="flex items-center justify-between px-3 py-2 border-b">
-                  <div>
-                    <div className="text-sm font-medium">{inv.invoice_number}</div>
-                    <div className="text-xs text-gray-500">Due ₹{inv.balance_due}</div>
-                  </div>
-                  <button className="btn btn-secondary btn-sm" onClick={()=>addRow({ target_type:'invoice', target_id: inv.id, ref: inv.invoice_number, balance: inv.balance_due, amount: inv.balance_due })}>Add</button>
-                </div>
-              ))}
-            </div>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {(paymentData?.results || paymentData || []).map((payment) => (
+                  <tr key={payment.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {payment.payment_number}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        payment.payment_type === 'customer_payment' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {payment.payment_type === 'customer_payment' ? 'Customer' : 'Vendor'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {payment.contact_name || payment.contact?.name || `Contact ID: ${payment.contact}`}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {new Date(payment.payment_date).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
+                      {payment.payment_method}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {formatCurrency(payment.amount)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {payment.reference || '-'}
+                    </td>
+                  </tr>
+                ))}
+                {(!paymentData?.results && !paymentData) || (paymentData?.results || paymentData || []).length === 0 && (
+                  <tr>
+                    <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                      No payments found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-          <div>
-            <h4 className="font-semibold mb-2">Pending Bills</h4>
-            <div className="max-h-64 overflow-auto border rounded">
-              {(billData?.results || billData || []).filter((b)=>Number(b.balance_due)>0).map(bill => (
-                <div key={bill.id} className="flex items-center justify-between px-3 py-2 border-b">
-                  <div>
-                    <div className="text-sm font-medium">{bill.bill_number}</div>
-                    <div className="text-xs text-gray-500">Due ₹{bill.balance_due}</div>
-                  </div>
-                  <button className="btn btn-secondary btn-sm" onClick={()=>addRow({ target_type:'bill', target_id: bill.id, ref: bill.bill_number, balance: bill.balance_due, amount: bill.balance_due })}>Add</button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-end mt-4">
-          <button className="btn btn-primary" onClick={()=>{
-            if (!rows.length) { toast.error('Add allocations'); return; }
-            createPayment.mutate();
-          }}>Allocate Payments</button>
-        </div>
+        )}
       </div>
+
+      {/* New Payment Form */}
+      {showForm && (
+        <div className="card p-6 space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-gray-900">Record New Payment</h3>
+            <button 
+              className="text-gray-400 hover:text-gray-600"
+              onClick={() => {setShowForm(false); setRows([]); setContactId(''); setReference('');}}
+            >
+              ✕
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <select className="input" value={mode} onChange={(e)=>setMode(e.target.value)}>
+              <option value="customer_payment">Customer Payment</option>
+              <option value="vendor_payment">Vendor Payment</option>
+            </select>
+            <input 
+              className="input" 
+              placeholder="Contact ID" 
+              value={contactId} 
+              onChange={(e)=>setContactId(e.target.value)}
+              required
+            />
+            <select className="input" value={paymentMethod} onChange={(e)=>setPaymentMethod(e.target.value)}>
+              <option value="cash">Cash</option>
+              <option value="bank">Bank</option>
+              <option value="cheque">Cheque</option>
+              <option value="online">Online</option>
+            </select>
+            <input 
+              className="input" 
+              type="date" 
+              value={date} 
+              onChange={(e)=>setDate(e.target.value)}
+              required
+            />
+            <input 
+              className="input" 
+              placeholder="Reference (optional)" 
+              value={reference} 
+              onChange={(e)=>setReference(e.target.value)}
+            />
+          </div>
+
+          {/* Payment Allocations Table */}
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reference</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Balance Due</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Allocate Amount</th>
+                  <th className="px-4 py-2"></th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {rows.map((r, idx) => (
+                  <tr key={idx}>
+                    <td className="px-4 py-2 text-sm font-medium capitalize">
+                      {r.target_type === 'invoice' ? 'Invoice' : 'Bill'}
+                    </td>
+                    <td className="px-4 py-2 text-sm">{r.ref || r.target_id}</td>
+                    <td className="px-4 py-2 text-sm">{formatCurrency(r.balance)}</td>
+                    <td className="px-4 py-2">
+                      <input 
+                        type="number" 
+                        step="0.01" 
+                        className="input w-32" 
+                        value={r.amount} 
+                        onChange={(e)=>updateRow(idx,'amount',e.target.value)}
+                        min="0.01"
+                        max={r.balance}
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <button 
+                        className="text-red-600 hover:text-red-800 text-sm"
+                        onClick={()=>removeRow(idx)}
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {rows.length === 0 && (
+                  <tr>
+                    <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
+                      Add invoice or bill allocations below
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Total Amount */}
+          {rows.length > 0 && (
+            <div className="flex justify-end">
+              <div className="text-right">
+                <span className="text-sm text-gray-600">Total Payment Amount: </span>
+                <span className="text-lg font-semibold text-gray-900">{formatCurrency(totalAllocation)}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Pending Invoices and Bills */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-semibold mb-3 text-gray-900">Pending Invoices</h4>
+              <div className="max-h-64 overflow-auto border rounded-lg">
+                {(invData?.results || invData || []).filter((i)=>Number(i.balance_due)>0).map(inv => (
+                  <div key={inv.id} className="flex items-center justify-between px-4 py-3 border-b hover:bg-gray-50">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{inv.invoice_number}</div>
+                      <div className="text-xs text-gray-500">
+                        Customer: {inv.customer_name || inv.customer?.name || 'Unknown'}
+                      </div>
+                      <div className="text-xs text-gray-600">Due: {formatCurrency(inv.balance_due)}</div>
+                    </div>
+                    <button 
+                      className="btn btn-secondary btn-sm" 
+                      onClick={()=>addRow({ 
+                        target_type:'invoice', 
+                        target_id: inv.id, 
+                        ref: inv.invoice_number, 
+                        balance: inv.balance_due, 
+                        amount: inv.balance_due 
+                      })}
+                      disabled={rows.some(r => r.target_type === 'invoice' && r.target_id === inv.id)}
+                    >
+                      {rows.some(r => r.target_type === 'invoice' && r.target_id === inv.id) ? 'Added' : 'Add'}
+                    </button>
+                  </div>
+                ))}
+                {(invData?.results || invData || []).filter((i)=>Number(i.balance_due)>0).length === 0 && (
+                  <div className="p-4 text-center text-gray-500 text-sm">
+                    No pending invoices
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-3 text-gray-900">Pending Bills</h4>
+              <div className="max-h-64 overflow-auto border rounded-lg">
+                {(billData?.results || billData || []).filter((b)=>Number(b.balance_due)>0).map(bill => (
+                  <div key={bill.id} className="flex items-center justify-between px-4 py-3 border-b hover:bg-gray-50">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{bill.bill_number}</div>
+                      <div className="text-xs text-gray-500">
+                        Vendor: {bill.vendor_name || bill.vendor?.name || 'Unknown'}
+                      </div>
+                      <div className="text-xs text-gray-600">Due: {formatCurrency(bill.balance_due)}</div>
+                    </div>
+                    <button 
+                      className="btn btn-secondary btn-sm" 
+                      onClick={()=>addRow({ 
+                        target_type:'bill', 
+                        target_id: bill.id, 
+                        ref: bill.bill_number, 
+                        balance: bill.balance_due, 
+                        amount: bill.balance_due 
+                      })}
+                      disabled={rows.some(r => r.target_type === 'bill' && r.target_id === bill.id)}
+                    >
+                      {rows.some(r => r.target_type === 'bill' && r.target_id === bill.id) ? 'Added' : 'Add'}
+                    </button>
+                  </div>
+                ))}
+                {(billData?.results || billData || []).filter((b)=>Number(b.balance_due)>0).length === 0 && (
+                  <div className="p-4 text-center text-gray-500 text-sm">
+                    No pending bills
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Form Actions */}
+          <div className="flex justify-end space-x-3 pt-4 border-t">
+            <button 
+              className="btn btn-secondary" 
+              onClick={() => {setShowForm(false); setRows([]); setContactId(''); setReference('');}}
+            >
+              Cancel
+            </button>
+            <button 
+              className="btn btn-primary" 
+              onClick={() => {
+                if (!contactId) { 
+                  toast.error('Contact ID is required'); 
+                  return; 
+                }
+                if (!rows.length) { 
+                  toast.error('Add at least one payment allocation'); 
+                  return; 
+                }
+                createPayment.mutate();
+              }}
+              disabled={createPayment.isLoading}
+            >
+              {createPayment.isLoading ? 'Recording...' : `Record Payment (${formatCurrency(totalAllocation)})`}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

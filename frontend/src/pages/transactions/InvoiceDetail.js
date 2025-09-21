@@ -29,12 +29,14 @@ const InvoiceDetail = () => {
         <div className="text-right">
           <div className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
             inv.status === 'paid' ? 'bg-green-100 text-green-800' : 
-            inv.status === 'partially_paid' ? 'bg-yellow-100 text-yellow-800' : 
-            'bg-red-100 text-red-800'
+            inv.status === 'overdue' ? 'bg-red-100 text-red-800' : 
+            inv.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
+            'bg-yellow-100 text-yellow-800'
           }`}>
             {inv.status === 'paid' ? 'Paid' : 
-             inv.status === 'partially_paid' ? 'Partially Paid' : 
-             'Unpaid'}
+             inv.status === 'overdue' ? 'Overdue' : 
+             inv.status === 'cancelled' ? 'Cancelled' :
+             'Pending'}
           </div>
         </div>
       </div>
@@ -181,7 +183,7 @@ const InvoiceDetail = () => {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Amount Paid</span>
-              <span className="font-medium text-green-600">₹{formatCurrency((parseFloat(inv.grand_total) || 0) - (parseFloat(inv.balance_due) || 0))}</span>
+              <span className="font-medium text-green-600">₹{formatCurrency(inv.paid_amount)}</span>
             </div>
             <div className="flex justify-between items-center border-t pt-3">
               <span className="text-lg font-semibold text-gray-900">Balance Due</span>

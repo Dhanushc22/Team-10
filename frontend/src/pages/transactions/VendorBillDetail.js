@@ -29,12 +29,14 @@ const VendorBillDetail = () => {
         <div className="text-right">
           <div className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
             bill.status === 'paid' ? 'bg-green-100 text-green-800' : 
-            bill.status === 'partially_paid' ? 'bg-yellow-100 text-yellow-800' : 
-            'bg-red-100 text-red-800'
+            bill.status === 'overdue' ? 'bg-red-100 text-red-800' : 
+            bill.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
+            'bg-yellow-100 text-yellow-800'
           }`}>
             {bill.status === 'paid' ? 'Paid' : 
-             bill.status === 'partially_paid' ? 'Partially Paid' : 
-             'Unpaid'}
+             bill.status === 'overdue' ? 'Overdue' : 
+             bill.status === 'cancelled' ? 'Cancelled' :
+             'Pending'}
           </div>
         </div>
       </div>
@@ -149,10 +151,10 @@ const VendorBillDetail = () => {
                       )}
                     </td>
                     <td className="px-4 py-4 text-right text-gray-900">{item.quantity}</td>
-                    <td className="px-4 py-4 text-right text-gray-900">₹{item.unit_price?.toFixed(2)}</td>
+                    <td className="px-4 py-4 text-right text-gray-900">₹{formatCurrency(item.unit_price)}</td>
                     <td className="px-4 py-4 text-right text-gray-900">{item.tax_percent}%</td>
-                    <td className="px-4 py-4 text-right text-gray-900">₹{item.tax_amount?.toFixed(2)}</td>
-                    <td className="px-4 py-4 text-right font-medium text-gray-900">₹{item.total?.toFixed(2)}</td>
+                    <td className="px-4 py-4 text-right text-gray-900">₹{formatCurrency(item.tax_amount)}</td>
+                    <td className="px-4 py-4 text-right font-medium text-gray-900">₹{formatCurrency(item.total)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -169,24 +171,24 @@ const VendorBillDetail = () => {
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Subtotal (Before Tax)</span>
-              <span className="font-medium">₹{bill.subtotal?.toFixed(2) || '0.00'}</span>
+              <span className="font-medium">₹{formatCurrency(bill.subtotal)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Tax Amount</span>
-              <span className="font-medium">₹{bill.tax_total?.toFixed(2) || '0.00'}</span>
+              <span className="font-medium">₹{formatCurrency(bill.tax_total)}</span>
             </div>
             <div className="flex justify-between items-center border-t pt-3">
               <span className="text-lg font-semibold text-gray-900">Grand Total</span>
-              <span className="text-xl font-bold text-gray-900">₹{bill.grand_total?.toFixed(2) || '0.00'}</span>
+              <span className="text-xl font-bold text-gray-900">₹{formatCurrency(bill.grand_total)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Amount Paid</span>
-              <span className="font-medium text-green-600">₹{((bill.grand_total || 0) - (bill.balance_due || 0)).toFixed(2)}</span>
+              <span className="font-medium text-green-600">₹{formatCurrency(bill.paid_amount)}</span>
             </div>
             <div className="flex justify-between items-center border-t pt-3">
               <span className="text-lg font-semibold text-gray-900">Balance Due</span>
               <span className={`text-xl font-bold ${bill.balance_due > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                ₹{bill.balance_due?.toFixed(2) || '0.00'}
+                ₹{formatCurrency(bill.balance_due)}
               </span>
             </div>
           </div>
