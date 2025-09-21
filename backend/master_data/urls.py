@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import hsn_views
 
 urlpatterns = [
     # Contact URLs
@@ -17,6 +18,10 @@ urlpatterns = [
     # Chart of Accounts URLs
     path('chart-of-accounts/', views.ChartOfAccountListCreateView.as_view(), name='chart-of-account-list-create'),
     path('chart-of-accounts/<int:pk>/', views.ChartOfAccountDetailView.as_view(), name='chart-of-account-detail'),
+    
+    # HSN Search URLs
+    path('hsn-search/', hsn_views.search_hsn_codes, name='hsn-search'),
+    path('hsn-search/mock/', hsn_views.mock_hsn_search, name='hsn-search-mock'),
     
     # Summary
     path('summary/', views.master_data_summary, name='master-data-summary'),

@@ -5,6 +5,7 @@ urlpatterns = [
     # Purchase Order URLs
     path('purchase-orders/', views.PurchaseOrderListCreateView.as_view(), name='purchase-order-list-create'),
     path('purchase-orders/<int:pk>/', views.PurchaseOrderDetailView.as_view(), name='purchase-order-detail'),
+    path('purchase-orders/<int:pk>/convert-to-bill/', views.convert_purchase_order_to_bill, name='convert-purchase-order-to-bill'),
     
     # Vendor Bill URLs
     path('vendor-bills/', views.VendorBillListCreateView.as_view(), name='vendor-bill-list-create'),
@@ -21,6 +22,7 @@ urlpatterns = [
     # Payment URLs
     path('payments/', views.PaymentListCreateView.as_view(), name='payment-list-create'),
     path('payments/<int:pk>/', views.PaymentDetailView.as_view(), name='payment-detail'),
+    path('payments/quick-allocate/', views.quick_allocate_payment, name='quick-allocate-payment'),
     
     # Contact User URLs
     path('contact-user/invoices/', views.contact_user_invoices, name='contact-user-invoices'),

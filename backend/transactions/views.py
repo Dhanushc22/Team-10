@@ -149,6 +149,12 @@ class PaymentListCreateView(generics.ListCreateAPIView):
         return PaymentSerializer
     
     def perform_create(self, serializer):
+        # Ensure payment_number is not included in data if empty
+        if 'payment_number' in self.request.data and not self.request.data['payment_number']:
+            # Remove empty payment_number to let model auto-generate
+            data = self.request.data.copy()
+            data.pop('payment_number', None)
+        
         serializer.save(created_by=self.request.user)
 
 

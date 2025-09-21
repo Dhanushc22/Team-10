@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { transactionsAPI } from '../../services/api';
+import { transactionsAPI, masterDataAPI } from '../../services/api';
 import { toast } from 'react-hot-toast';
 
 const Payments = () => {
@@ -8,6 +8,7 @@ const Payments = () => {
   const { data: paymentData, isLoading: paymentsLoading } = useQuery('payments', () => transactionsAPI.getPayments().then(r => r.data));
   const { data: invData } = useQuery('customer-invoices', () => transactionsAPI.getCustomerInvoices().then(r => r.data));
   const { data: billData } = useQuery('vendor-bills', () => transactionsAPI.getVendorBills().then(r => r.data));
+  const { data: contactsData } = useQuery('contacts', () => masterDataAPI.getContacts().then(r => r.data));
 
   const [showForm, setShowForm] = useState(false);
   const [mode, setMode] = useState('customer_payment');
@@ -15,6 +16,7 @@ const Payments = () => {
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [reference, setReference] = useState('');
+  const [notes, setNotes] = useState('');
   const [rows, setRows] = useState([]); // {target_type:'invoice'|'bill', target_id, amount}
 
   const addRow = (row) => setRows([...rows, row]);
@@ -41,7 +43,8 @@ const Payments = () => {
       payment_date: date,
       payment_method: paymentMethod,
       amount: totalAmount,
-      reference: reference
+      reference: reference,
+      notes: notes
     };
 
     const paymentResponse = await transactionsAPI.createPayment(paymentData);
@@ -65,6 +68,7 @@ const Payments = () => {
       setRows([]); 
       setContactId('');
       setReference('');
+      setNotes('');
       setShowForm(false);
       queryClient.invalidateQueries('payments');
       queryClient.invalidateQueries('customer-invoices'); 
@@ -167,48 +171,109 @@ const Payments = () => {
 
       {/* New Payment Form */}
       {showForm && (
-        <div className="card p-6 space-y-4">
+        <div className="card p-6 space-y-6">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold text-gray-900">Record New Payment</h3>
             <button 
               className="text-gray-400 hover:text-gray-600"
-              onClick={() => {setShowForm(false); setRows([]); setContactId(''); setReference('');}}
+              onClick={() => {setShowForm(false); setRows([]); setContactId(''); setReference(''); setNotes('');}}
             >
               ✕
             </button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <select className="input" value={mode} onChange={(e)=>setMode(e.target.value)}>
-              <option value="customer_payment">Customer Payment</option>
-              <option value="vendor_payment">Vendor Payment</option>
-            </select>
-            <input 
-              className="input" 
-              placeholder="Contact ID" 
-              value={contactId} 
-              onChange={(e)=>setContactId(e.target.value)}
-              required
-            />
-            <select className="input" value={paymentMethod} onChange={(e)=>setPaymentMethod(e.target.value)}>
-              <option value="cash">Cash</option>
-              <option value="bank">Bank</option>
-              <option value="cheque">Cheque</option>
-              <option value="online">Online</option>
-            </select>
-            <input 
-              className="input" 
-              type="date" 
-              value={date} 
-              onChange={(e)=>setDate(e.target.value)}
-              required
-            />
-            <input 
-              className="input" 
-              placeholder="Reference (optional)" 
-              value={reference} 
-              onChange={(e)=>setReference(e.target.value)}
-            />
+          {/* Payment Details Section */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h4 className="text-md font-semibold text-gray-800 mb-3">Payment Details</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              
+              {/* Payment Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Payment Type</label>
+                <select className="input" value={mode} onChange={(e)=>setMode(e.target.value)}>
+                  <option value="customer_payment">Customer Payment (Money Received)</option>
+                  <option value="vendor_payment">Vendor Payment (Money Paid)</option>
+                </select>
+              </div>
+
+              {/* Contact Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {mode === 'customer_payment' ? 'Customer' : 'Vendor'}
+                </label>
+                <select 
+                  className="input" 
+                  value={contactId} 
+                  onChange={(e)=>setContactId(e.target.value)}
+                  required
+                >
+                  <option value="">Select {mode === 'customer_payment' ? 'Customer' : 'Vendor'}</option>
+                  {(contactsData?.results || contactsData || [])
+                    .filter(contact => {
+                      if (mode === 'customer_payment') {
+                        return contact.type === 'customer' || contact.type === 'both';
+                      } else {
+                        return contact.type === 'vendor' || contact.type === 'both';
+                      }
+                    })
+                    .map(contact => (
+                      <option key={contact.id} value={contact.id}>
+                        {contact.name} - {contact.email || contact.mobile}
+                      </option>
+                    ))
+                  }
+                </select>
+                {!contactId && (
+                  <p className="text-xs text-gray-500 mt-1">Choose who you're receiving payment from or paying to</p>
+                )}
+              </div>
+
+              {/* Payment Method */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                <select className="input" value={paymentMethod} onChange={(e)=>setPaymentMethod(e.target.value)}>
+                  <option value="cash">Cash</option>
+                  <option value="bank">Bank Transfer</option>
+                  <option value="cheque">Cheque</option>
+                  <option value="online">Online/UPI</option>
+                </select>
+              </div>
+
+              {/* Payment Date */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Payment Date</label>
+                <input 
+                  className="input" 
+                  type="date" 
+                  value={date} 
+                  onChange={(e)=>setDate(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Reference */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Reference</label>
+                <input 
+                  className="input" 
+                  placeholder="e.g., Check #123, UPI Ref: ABC123" 
+                  value={reference} 
+                  onChange={(e)=>setReference(e.target.value)}
+                />
+                <p className="text-xs text-gray-500 mt-1">Transaction ID, check number, or payment reference</p>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <input 
+                  className="input" 
+                  placeholder="Additional notes (optional)" 
+                  value={notes} 
+                  onChange={(e)=>setNotes(e.target.value)}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Payment Allocations Table */}
@@ -350,7 +415,7 @@ const Payments = () => {
           <div className="flex justify-end space-x-3 pt-4 border-t">
             <button 
               className="btn btn-secondary" 
-              onClick={() => {setShowForm(false); setRows([]); setContactId(''); setReference('');}}
+              onClick={() => {setShowForm(false); setRows([]); setContactId(''); setReference(''); setNotes('');}}
             >
               Cancel
             </button>
@@ -358,7 +423,7 @@ const Payments = () => {
               className="btn btn-primary" 
               onClick={() => {
                 if (!contactId) { 
-                  toast.error('Contact ID is required'); 
+                  toast.error('Please select a contact'); 
                   return; 
                 }
                 if (!rows.length) { 

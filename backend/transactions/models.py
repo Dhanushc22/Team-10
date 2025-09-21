@@ -251,6 +251,7 @@ class Payment(models.Model):
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
     amount = models.DecimalField(max_digits=15, decimal_places=2, validators=[MinValueValidator(0.01)])
     reference = models.CharField(max_length=255, blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_payments')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -259,8 +260,46 @@ class Payment(models.Model):
         db_table = 'payments'
         ordering = ['-payment_date', '-created_at']
     
+    def save(self, *args, **kwargs):
+        # Auto-generate payment number if not provided
+        if not self.payment_number:
+            from django.db import transaction
+            import time
+            
+            with transaction.atomic():
+                # Use a more robust approach with database locking
+                # Get the current maximum ID to use as a base
+                try:
+                    # Use the auto-increment ID as base for uniqueness
+                    # This ensures even simultaneous requests get different numbers
+                    temp_save = kwargs.get('force_insert', False)
+                    
+                    # First, save with a temporary number to get the ID
+                    temp_number = f'TEMP-{int(time.time() * 1000000)}'
+                    self.payment_number = temp_number
+                    
+                    # Save to get the auto-generated ID
+                    super().save(*args, **kwargs)
+                    
+                    # Now create the final payment number using the ID
+                    timestamp = int(time.time())
+                    final_number = f'PAY-{timestamp}{self.id:04d}'
+                    
+                    # Update with the final number
+                    Payment.objects.filter(id=self.id).update(payment_number=final_number)
+                    self.payment_number = final_number
+                    
+                    return  # Exit early since we've already saved
+                    
+                except Exception as e:
+                    # Fallback to UUID if anything goes wrong
+                    import uuid
+                    self.payment_number = f'PAY-{uuid.uuid4().hex[:12].upper()}'
+        
+        super().save(*args, **kwargs)
+    
     def __str__(self):
-        return f"PAY-{self.payment_number} - {self.contact.name}"
+        return f"{self.payment_number} - {self.contact.name}"
 
 
 class PaymentAllocation(models.Model):

@@ -14,7 +14,8 @@ import {
   UserCheck,
   LogOut,
   Settings,
-  Shield
+  Shield,
+  Search
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -46,6 +47,9 @@ const Sidebar = () => {
       { name: 'Profit & Loss', href: '/reports/profit-loss', icon: BarChart3 },
       { name: 'Stock Report', href: '/reports/stock-report', icon: Package2 },
       { name: 'Partner Ledger', href: '/reports/partner-ledger', icon: UserCheck },
+    ]},
+    { name: 'Utilities', href: '#', icon: Settings, children: [
+      { name: 'HSN Search', href: '/utilities/hsn-search', icon: Search },
     ]},
   ];
 
@@ -82,6 +86,9 @@ const Sidebar = () => {
       { name: 'Profit & Loss', href: '/reports/profit-loss', icon: BarChart3 },
       { name: 'Stock Report', href: '/reports/stock-report', icon: Package2 },
       { name: 'Partner Ledger', href: '/reports/partner-ledger', icon: UserCheck },
+    ]},
+    { name: 'Utilities', href: '#', icon: Settings, children: [
+      { name: 'HSN Search', href: '/utilities/hsn-search', icon: Search },
     ]},
   ];
 

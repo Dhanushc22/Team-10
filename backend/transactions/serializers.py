@@ -150,7 +150,7 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = ['id', 'payment_number', 'payment_type', 'contact', 'contact_id', 'contact_name',
-                 'payment_date', 'payment_method', 'amount', 'reference',
+                 'payment_date', 'payment_method', 'amount', 'reference', 'notes',
                  'allocations', 'created_by_name', 'created_at', 'updated_at']
         read_only_fields = ['id', 'payment_number', 'created_at', 'updated_at']
 

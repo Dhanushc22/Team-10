@@ -28,6 +28,7 @@ import ContactDashboard from './pages/ContactDashboard';
 import UserManagement from './pages/admin/UserManagement';
 import Profile from './pages/Profile';
 import InvoiceDetail from './pages/transactions/InvoiceDetail';
+import HSNSearchDemo from './pages/HSNSearchDemo';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -110,6 +111,9 @@ function App() {
                 <Route path="reports/profit-loss" element={<ProfitLoss />} />
                 <Route path="reports/stock-report" element={<StockReport />} />
                 <Route path="reports/partner-ledger" element={<PartnerLedger />} />
+                
+                {/* Utilities */}
+                <Route path="utilities/hsn-search" element={<HSNSearchDemo />} />
                 
                 {/* Contact User Routes */}
                 <Route path="contact-dashboard" element={<ContactDashboard />} />

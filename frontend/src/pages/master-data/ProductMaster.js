@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useForm } from 'react-hook-form';
 import { Plus, Edit, Trash2, Search, X } from 'lucide-react';
 import { masterDataAPI } from '../../services/api';
+import HSNSearchInput from '../../components/HSNSearchInput';
 import toast from 'react-hot-toast';
 
 const ProductMaster = () => {
@@ -10,6 +11,8 @@ const ProductMaster = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('');
+  const [selectedHSN, setSelectedHSN] = useState('');
+  const [suggestedGSTRate, setSuggestedGSTRate] = useState('');
   const queryClient = useQueryClient();
 
   const { register, handleSubmit, reset, formState: { errors }, setValue } = useForm();
@@ -24,7 +27,7 @@ const ProductMaster = () => {
     onSuccess: () => {
       queryClient.invalidateQueries('products');
       toast.success('Product created');
-      reset(); setShowForm(false);
+      resetForm();
     },
     onError: () => toast.error('Create failed')
   });
@@ -33,7 +36,7 @@ const ProductMaster = () => {
     onSuccess: () => {
       queryClient.invalidateQueries('products');
       toast.success('Product updated');
-      reset(); setShowForm(false); setEditingItem(null);
+      resetForm();
     },
     onError: () => toast.error('Update failed')
   });
@@ -50,16 +53,44 @@ const ProductMaster = () => {
 
   const handleEdit = (item) => {
     setEditingItem(item);
-    setValue('name', item.name);
-    setValue('type', item.type);
-    setValue('sales_price', item.sales_price);
-    setValue('purchase_price', item.purchase_price);
-    setValue('sale_tax_percent', item.sale_tax_percent);
-    setValue('purchase_tax_percent', item.purchase_tax_percent);
-    setValue('hsn_code', item.hsn_code);
-    setValue('category', item.category);
-    setValue('description', item.description);
+    setSelectedHSN(item.hsn_code || '');
+    setSuggestedGSTRate('');
+    Object.keys(item).forEach(key => setValue(key, item[key]));
     setShowForm(true);
+  };
+
+  const handleHSNSelect = (hsnData) => {
+    const hsnCode = hsnData.hsn_code || hsnData.code || hsnData.hsnCode;
+    const gstRate = hsnData.gst_rate;
+    
+    setSelectedHSN(hsnCode);
+    setSuggestedGSTRate(gstRate);
+    
+    // Update form values
+    setValue('hsn_code', hsnCode);
+    
+    // Auto-fill GST rates if available
+    if (gstRate) {
+      setValue('sale_tax_percent', parseFloat(gstRate));
+      setValue('purchase_tax_percent', parseFloat(gstRate));
+      toast.success(`HSN ${hsnCode} selected. GST rate ${gstRate}% applied.`);
+    }
+  };
+
+  const handleHSNChange = (value) => {
+    setSelectedHSN(value);
+    setValue('hsn_code', value);
+    if (!value) {
+      setSuggestedGSTRate('');
+    }
+  };
+
+  const resetForm = () => {
+    reset();
+    setSelectedHSN('');
+    setSuggestedGSTRate('');
+    setShowForm(false);
+    setEditingItem(null);
   };
 
   const handleDelete = (item) => {
@@ -123,7 +154,19 @@ const ProductMaster = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">HSN Code</label>
-                    <input {...register('hsn_code')} className="input" />
+                    <HSNSearchInput
+                      value={selectedHSN}
+                      onChange={handleHSNChange}
+                      onSelect={handleHSNSelect}
+                      type="product"
+                      placeholder="Type: chair, table, office desk, student desk, restaurant table, kids furniture, outdoor furniture, mattress, wood, paint, hinge..."
+                      className="w-full"
+                    />
+                    {suggestedGSTRate && (
+                      <div className="mt-1 text-xs text-green-600">
+                        💡 Suggested GST Rate: {suggestedGSTRate}% (auto-applied)
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Category</label>
@@ -136,7 +179,7 @@ const ProductMaster = () => {
                 </div>
                 <div className="flex space-x-3 pt-2">
                   <button type="submit" className="btn btn-primary flex-1">{editingItem ? 'Update' : 'Save'}</button>
-                  <button type="button" onClick={() => { reset(); setShowForm(false); setEditingItem(null); }} className="btn btn-secondary">Cancel</button>
+                  <button type="button" onClick={resetForm} className="btn btn-secondary">Cancel</button>
                 </div>
               </form>
             </div>
